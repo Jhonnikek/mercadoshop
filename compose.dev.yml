@@ -9,6 +9,8 @@ services:
     restart: "unless-stopped"
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres_secure_pass_123@db:5432/mercadoshop
     volumes:
       - ./app:/code/app
     depends_on:
@@ -20,6 +22,10 @@ services:
     restart: "unless-stopped"
     env_file:
       - .env
+    environment:
+      - POSTGRES_DB=mercadoshop
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres_secure_pass_123
     ports:
       - "5432:5432"
     volumes:

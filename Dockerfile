@@ -4,6 +4,8 @@ COPY --from=ghcr.io/astral-sh/uv:0.10.4 /uv /uvx /bin/
 
 WORKDIR /code
 
+RUN apt-get update && apt-get install -y libpq-dev gcc && rm -rf /var/lib/apt/lists/*
+
 COPY pyproject.toml uv.lock ./
 
 RUN uv sync --frozen --no-cache
