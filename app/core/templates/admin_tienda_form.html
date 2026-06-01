@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>{% if tienda %}Editar Tienda{% else %}Crear Tienda{% endif %} - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    {% include "includes/tailwind_config.html" %}
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #faf8ff; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased flex h-screen overflow-hidden">
+    <!-- SideNavBar -->
+    {% include 'includes/sidebar.html' %}
+
+    <!-- Main Content Area -->
+    <main class="flex-1 ml-0 md:ml-64 bg-background h-screen overflow-y-auto">
+        <header class="bg-surface-container-lowest border-b border-outline-variant/50 sticky top-0 z-40">
+            <div class="px-margin-desktop py-4 flex items-center justify-between max-w-container-max mx-auto">
+                <div class="flex items-center gap-2">
+                    <a href="{% url 'admin_tiendas' %}" class="text-primary hover:underline text-label-md flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                        Volver a Tiendas
+                    </a>
+                </div>
+                <h2 class="text-headline-md font-headline-md text-on-surface">{% if tienda %}Editar Tienda ST-{{ tienda.id }}{% else %}Crear Nueva Tienda{% endif %}</h2>
+            </div>
+        </header>
+
+        <div class="p-margin-desktop max-w-2xl mx-auto space-y-gutter py-8">
+            {% if error %}
+                <div class="p-4 bg-error-container text-on-error-container border border-error/20 rounded-lg text-body-md shadow-sm">
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            <form method="POST" enctype="multipart/form-data" class="bg-white border border-outline-variant rounded-xl shadow-sm overflow-hidden p-6 space-y-6">
+                {% csrf_token %}
+                <h3 class="text-headline-md font-bold text-on-surface pb-3 border-b border-outline-variant/30">Detalles de la Tienda</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-label-md font-semibold text-on-surface mb-2" for="nombre_comercial">Nombre Comercial *</label>
+                        <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                               id="nombre_comercial" name="nombre_comercial" type="text" value="{{ tienda.nombre_comercial|default:'' }}" required placeholder="ej. AgroColombia"/>
+                    </div>
+                    <div>
+                        <label class="block text-label-md font-semibold text-on-surface mb-2" for="razon_social">Razón Social *</label>
+                        <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                               id="razon_social" name="razon_social" type="text" value="{{ tienda.razon_social|default:'' }}" required placeholder="ej. Agropecuaria de Colombia S.A.S"/>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-label-md font-semibold text-on-surface mb-2" for="correo_atencion">Correo Electrónico Comercial *</label>
+                        <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                               id="correo_atencion" name="correo_atencion" type="email" value="{{ tienda.correo_atencion|default:'' }}" required placeholder="ej. contacto@tienda.com"/>
+                    </div>
+                    <div>
+                        <label class="block text-label-md font-semibold text-on-surface mb-2" for="telefono_atencion">Teléfono de Atención *</label>
+                        <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                               id="telefono_atencion" name="telefono_atencion" type="text" value="{{ tienda.telefono_atencion|default:'' }}" required placeholder="ej. 601234567"/>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-label-md font-semibold text-on-surface mb-2" for="descripcion">Descripción</label>
+                    <textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none" 
+                              id="descripcion" name="descripcion" rows="3" placeholder="Información comercial sobre la tienda...">{{ tienda.descripcion|default:'' }}</textarea>
+                </div>
+
+                <div>
+                          <label class="block text-label-md font-semibold text-on-surface mb-2" for="url_logo">Logo desde el PC (Opcional)</label>
+                          <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                              id="url_logo" name="url_logo" type="file" accept="image/*"/>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-label-md font-semibold text-on-surface mb-2" for="estado_tienda">Estado de Tienda *</label>
+                        <div class="relative">
+                            <select class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-body-md appearance-none focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                                    id="estado_tienda" name="estado_tienda" required>
+                                <option value="Activa" {% if tienda.estado_tienda == 'Activa' %}selected{% endif %}>Activa</option>
+                                <option value="Suspendida" {% if tienda.estado_tienda == 'Suspendida' %}selected{% endif %}>Suspendida</option>
+                            </select>
+                            <span class="material-symbols-outlined absolute right-3 top-3 text-on-surface-variant pointer-events-none">expand_more</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-label-md font-semibold text-on-surface mb-2" for="plan_id">ID del Plan Suscripción</label>
+                        <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                               id="plan_id" name="plan_id" type="number" value="{{ tienda.plan_id|default:'' }}" placeholder="ej. 1"/>
+                    </div>
+
+                    <div>
+                        <label class="block text-label-md font-semibold text-on-surface mb-2" for="fecha_vencimiento_suscripcion">Vencimiento Suscripción</label>
+                        <input class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                               id="fecha_vencimiento_suscripcion" name="fecha_vencimiento_suscripcion" type="datetime-local" 
+                               value="{{ tienda.fecha_vencimiento_suscripcion|date:'Y-m-d\TH:i' }}"/>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-label-md font-semibold text-on-surface mb-2" for="trabajador_id">Asignar Empleado Administrador (Manager)</label>
+                    <div class="relative">
+                        <select class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-body-md appearance-none focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                                id="trabajador_id" name="trabajador_id">
+                            <option value="">Ninguno / Sin asignar</option>
+                            {% for w in trabajadores %}
+                                <option value="{{ w.id }}" {% if trabajador_actual.id == w.id %}selected{% endif %}>{{ w.first_name }} {{ w.last_name }} ({{ w.username }})</option>
+                            {% endfor %}
+                        </select>
+                        <span class="material-symbols-outlined absolute right-3 top-3 text-on-surface-variant pointer-events-none">expand_more</span>
+                    </div>
+                    <p class="text-body-sm text-outline mt-1.5 italic">Solo usuarios registrados con el Rol "Trabajador de Tienda" aparecen en esta lista.</p>
+                </div>
+
+                <div class="pt-6 border-t border-outline-variant/30 flex justify-end gap-3">
+                    <a href="{% url 'admin_tiendas' %}" class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-low transition-colors text-label-md font-semibold">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="px-6 py-2 rounded-lg bg-primary text-on-primary hover:bg-primary/95 transition-colors shadow-sm text-label-md font-semibold">
+                        {% if tienda %}Guardar Cambios{% else %}Crear Tienda{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

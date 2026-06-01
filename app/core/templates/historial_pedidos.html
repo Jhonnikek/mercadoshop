@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+{% load core_tags %}
+<html class="h-full bg-surface" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Historial de Pedidos - Mercado Shop</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+    {% include "includes/tailwind_config.html" %}
+</head>
+<body class="bg-surface text-on-surface h-full flex overflow-hidden font-body-md">
+
+<!-- SideNavBar -->
+{% include 'includes/sidebar.html' %}
+
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden bg-surface-container-lowest">
+    <!-- Header -->
+    <header class="bg-surface border-b border-outline-variant px-margin-desktop py-6 flex justify-between items-center shrink-0">
+        <div>
+            <h2 class="text-headline-lg font-headline-lg font-bold text-on-surface">Gestión de Pedidos</h2>
+            <p class="text-body-md font-body-md text-on-surface-variant mt-1">
+                {% if is_worker %}
+                    Listado de pedidos vinculados a los productos de tu tienda.
+                {% else %}
+                    Tus compras y estado de pedidos.
+                {% endif %}
+            </p>
+        </div>
+    </header>
+    
+    <!-- Content Canvas -->
+    <div class="flex-grow overflow-y-auto p-6 md:p-10 bg-surface-container-low">
+        <div class="max-w-container-max mx-auto space-y-6">
+            
+            <!-- Table of orders -->
+            <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[700px]">
+                        <thead>
+                            <tr class="border-b border-outline-variant bg-surface text-on-surface-variant text-label-sm font-label-sm uppercase tracking-wider">
+                                <th class="p-4">ID Pedido</th>
+                                <th class="p-4">Fecha</th>
+                                <th class="p-4">Cliente</th>
+                                <th class="p-4 text-right">Monto Total</th>
+                                <th class="p-4">Estado</th>
+                                <th class="p-4 text-right">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-outline-variant/30 text-body-md font-body-md text-on-surface">
+                            {% for ped in pedidos %}
+                            <tr class="hover:bg-primary-fixed/20 transition-colors group">
+                                <td class="p-4 font-semibold text-primary">#{{ ped.numero_comprobante }}</td>
+                                <td class="p-4 text-on-surface-variant">{{ ped.fecha_actualizacion|date:"M d, Y" }}</td>
+                                <td class="p-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-label-sm font-label-sm uppercase">
+                                            {{ ped.cliente.username|slice:":2" }}
+                                        </div>
+                                        <span>{{ ped.cliente.first_name|default:ped.cliente.username }}</span>
+                                    </div>
+                                </td>
+                                <td class="p-4 text-right font-semibold">${{ ped.total|formato_pesos }}</td>
+                                <td class="p-4">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-tertiary-fixed text-on-tertiary-fixed-variant border border-tertiary-fixed-dim/50">
+                                        <span class="w-2 h-2 rounded-full bg-tertiary-container mr-1.5"></span>
+                                        {{ ped.estado_pedido.nombre_estado }}
+                                    </span>
+                                </td>
+                                <td class="p-4 text-right">
+                                    <div class="flex justify-end">
+                                        {% if is_worker %}
+                                        <a class="bg-primary text-on-primary hover:bg-primary-fixed-variant px-4 py-2 rounded-lg text-label-md font-bold transition-all shadow-sm flex items-center justify-center gap-2" href="{% url 'pedido_detalle_trabajador' ped.id %}">
+                                            Gestionar
+                                        </a>
+                                        {% else %}
+                                        <a class="bg-primary text-on-primary hover:bg-primary-fixed-variant px-4 py-2 rounded-lg text-label-md font-bold transition-all shadow-sm flex items-center justify-center gap-2" href="{% url 'pedido_detalle_cliente' ped.id %}">
+                                            Seguimiento
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="p-8 text-center text-on-surface-variant">
+                                    No hay pedidos registrados en este momento.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

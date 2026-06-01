@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+{% load core_tags %}
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Detalle del Pedido - Mercado Shop</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    {% include "includes/tailwind_config.html" %}
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid #E2E8F0;
+            box-shadow: 0px 4px 20px rgba(15, 23, 42, 0.05);
+        }
+        .progress-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #E2E8F0;
+            z-index: 0;
+            transform: translateY(-50%);
+        }
+        .progress-line-active {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            height: 2px;
+            background-color: #004ac6; /* primary */
+            z-index: 0;
+            transform: translateY(-50%);
+            transition: width 0.5s ease-in-out;
+        }
+        .progress-node {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased min-h-screen flex flex-col">
+    <!-- TopNavBar -->
+    <nav class="bg-surface dark:bg-on-surface border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none w-full sticky top-0 z-50">
+        <div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto h-16">
+            <a href="{% url 'home' %}" class="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed-dim">
+                Mercado Shop
+            </a>
+            <div class="hidden md:flex gap-6 items-center">
+                <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors duration-200 text-label-md font-label-md" href="{% url 'catalogo' %}">Catálogo de Productos</a>
+                <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors duration-200 text-label-md font-label-md" href="{% url 'test_dashboard' %}">Mi Panel</a>
+                {% if user.is_superuser or user.tipo_usuario == 'ADMIN' %}
+                    <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors duration-200 text-label-md font-label-md" href="/admin/">Django Admin</a>
+                {% endif %}
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-body-sm font-semibold">Hola, {{ user.username }}</span>
+                <form action="{% url 'logout' %}" method="POST" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="text-primary text-label-sm font-label-sm border border-primary hover:bg-primary/5 px-3 py-1.5 rounded-lg transition-colors">
+                        Salir
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Canvas -->
+    <main class="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-12">
+        <!-- Header -->
+        <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+                <a class="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary mb-4 text-label-md font-label-md transition-colors" href="{% url 'test_dashboard' %}">
+                    <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                    Volver a mi Panel
+                </a>
+                <h1 class="text-headline-xl-mobile md:text-headline-xl font-headline-xl-mobile md:font-headline-xl text-on-surface">Pedido #{{ pedido.numero_comprobante }}</h1>
+                <p class="text-body-md font-body-md text-on-surface-variant mt-2">Realizado el {{ pedido.fecha_actualizacion|date:"d M Y, h:i A" }}</p>
+            </div>
+        </div>
+
+        <!-- Bento Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+            <!-- Left Column (Tracker & Items) -->
+            <div class="lg:col-span-8 flex flex-col gap-gutter">
+                <!-- Progress Tracker Card -->
+                <div class="glass-card rounded-xl p-6 md:p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-headline-md font-headline-md text-on-surface">Estado del Envío</h2>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container/20 text-secondary text-label-sm font-label-sm font-medium border border-secondary-container">
+                            <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                            {{ pedido.estado_pedido.nombre_estado }}
+                        </span>
+                    </div>
+
+                    <!-- Progress Stepper (Visual Indicator based on Order Status) -->
+                    <div class="relative mt-12 mb-8">
+                        <div class="progress-line"></div>
+                        <!-- Active line width is set dynamically -->
+                        <div class="progress-line-active" style="width: {% if pedido.estado_pedido.nombre_estado == 'Creado' %}0%{% elif pedido.estado_pedido.nombre_estado == 'Procesando' %}25%{% elif pedido.estado_pedido.nombre_estado == 'Listo para Enviar' %}50%{% elif pedido.estado_pedido.nombre_estado == 'Enviado' %}75%{% elif pedido.estado_pedido.nombre_estado == 'Entregado' %}100%{% else %}50%{% endif %};"></div>
+                        <div class="flex justify-between w-full relative">
+                            <!-- Node 1: Placed -->
+                            <div class="progress-node flex flex-col items-center">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center shadow-md bg-primary text-on-primary">
+                                    <span class="material-symbols-outlined text-[16px]">check</span>
+                                </div>
+                                <span class="mt-3 text-label-sm font-label-sm text-on-surface text-center">Creado</span>
+                            </div>
+                            
+                            <!-- Node 2: Processing -->
+                            <div class="progress-node flex flex-col items-center">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center shadow-md {% if pedido.estado_pedido.nombre_estado != 'Creado' %}bg-primary text-on-primary{% else %}bg-surface-container-highest border border-outline-variant text-outline-variant{% endif %}">
+                                    {% if pedido.estado_pedido.nombre_estado != 'Creado' %}
+                                        <span class="material-symbols-outlined text-[16px]">check</span>
+                                    {% endif %}
+                                </div>
+                                <span class="mt-3 text-label-sm font-label-sm text-center {% if pedido.estado_pedido.nombre_estado != 'Creado' %}text-on-surface{% else %}text-on-surface-variant{% endif %}">Procesando</span>
+                            </div>
+
+                            <!-- Node 3: Ready to Ship -->
+                            <div class="progress-node flex flex-col items-center">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center shadow-md {% if pedido.estado_pedido.nombre_estado == 'Listo para Enviar' or pedido.estado_pedido.nombre_estado == 'Enviado' or pedido.estado_pedido.nombre_estado == 'Entregado' %}bg-primary text-on-primary{% else %}bg-surface-container-highest border border-outline-variant text-outline-variant{% endif %}">
+                                    {% if pedido.estado_pedido.nombre_estado == 'Listo para Enviar' or pedido.estado_pedido.nombre_estado == 'Enviado' or pedido.estado_pedido.nombre_estado == 'Entregado' %}
+                                        <span class="material-symbols-outlined text-[16px]">check</span>
+                                    {% endif %}
+                                </div>
+                                <span class="mt-3 text-label-sm font-label-sm text-center {% if pedido.estado_pedido.nombre_estado == 'Listo para Enviar' or pedido.estado_pedido.nombre_estado == 'Enviado' or pedido.estado_pedido.nombre_estado == 'Entregado' %}text-on-surface{% else %}text-on-surface-variant{% endif %}">Listo para Enviar</span>
+                            </div>
+
+                            <!-- Node 4: Shipped -->
+                            <div class="progress-node flex flex-col items-center">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center shadow-md {% if pedido.estado_pedido.nombre_estado == 'Enviado' or pedido.estado_pedido.nombre_estado == 'Entregado' %}bg-primary text-on-primary{% else %}bg-surface-container-highest border border-outline-variant text-outline-variant{% endif %}">
+                                    {% if pedido.estado_pedido.nombre_estado == 'Enviado' or pedido.estado_pedido.nombre_estado == 'Entregado' %}
+                                        <span class="material-symbols-outlined text-[16px]">check</span>
+                                    {% endif %}
+                                </div>
+                                <span class="mt-3 text-label-sm font-label-sm text-center {% if pedido.estado_pedido.nombre_estado == 'Enviado' or pedido.estado_pedido.nombre_estado == 'Entregado' %}text-on-surface{% else %}text-on-surface-variant{% endif %}">Enviado</span>
+                            </div>
+
+                            <!-- Node 5: Delivered -->
+                            <div class="progress-node flex flex-col items-center">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center shadow-md {% if pedido.estado_pedido.nombre_estado == 'Entregado' %}bg-primary text-on-primary{% else %}bg-surface-container-highest border border-outline-variant text-outline-variant{% endif %}">
+                                    {% if pedido.estado_pedido.nombre_estado == 'Entregado' %}
+                                        <span class="material-symbols-outlined text-[16px]">check</span>
+                                    {% endif %}
+                                </div>
+                                <span class="mt-3 text-label-sm font-label-sm text-center {% if pedido.estado_pedido.nombre_estado == 'Entregado' %}text-primary font-bold{% else %}text-on-surface-variant{% endif %}">Entregado</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Purchased Items Card -->
+                <div class="glass-card rounded-xl p-6 md:p-8">
+                    <h2 class="text-headline-md font-headline-md text-on-surface mb-6">Artículos Comprados</h2>
+                    <div class="flex flex-col gap-6">
+                        {% for item in detalles %}
+                        <div class="flex flex-col sm:flex-row gap-4 py-4 border-b border-surface-container-high last:border-0">
+                            <div class="w-24 h-24 rounded-lg bg-surface-container-low flex-shrink-0 overflow-hidden relative border border-outline-variant/30 flex items-center justify-center">
+                                {% if item.producto.url_imagen_principal %}
+                                    <img alt="{{ item.nombre_producto }}" class="w-full h-full object-cover" src="{{ item.producto.url_imagen_principal }}"/>
+                                {% else %}
+                                    <span class="material-symbols-outlined text-outline text-3xl">image</span>
+                                {% endif %}
+                            </div>
+                            <div class="flex flex-col flex-grow justify-between">
+                                <div class="flex justify-between items-start gap-4">
+                                    <div>
+                                        <h3 class="text-body-lg font-body-lg font-medium text-on-surface">{{ item.nombre_producto }}</h3>
+                                        <p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Tienda comercial: {{ item.producto.tienda.nombre_comercial }}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-body-lg font-body-lg font-semibold text-on-surface">${{ item.precio_compra|formato_pesos }}</span>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-end mt-4">
+                                    <span class="text-label-md font-label-md text-on-surface-variant">Cant: {{ item.cantidad }}</span>
+                                    <a href="{% url 'producto_detalle' item.producto.id %}" class="text-primary text-label-sm font-label-sm hover:underline">Ver Producto</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column (Summary Details) -->
+            <div class="lg:col-span-4 flex flex-col gap-gutter">
+                <!-- Order Summary Glass Card -->
+                <div class="glass-card rounded-xl p-6 relative overflow-hidden group hover:shadow-level-2 transition-shadow duration-300">
+                    <h3 class="text-headline-md font-headline-md text-on-surface mb-4">Resumen de Pago</h3>
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between text-body-md font-body-md text-on-surface-variant">
+                            <span>Subtotal</span>
+                            <span>${{ pedido.subtotal|formato_pesos }}</span>
+                        </div>
+                        <div class="flex justify-between text-body-md font-body-md text-on-surface-variant">
+                            <span>Envío</span>
+                            <span>${{ pedido.costo_envio|formato_pesos }}</span>
+                        </div>
+                        <div class="h-px w-full bg-surface-container-high my-4"></div>
+                        <div class="flex justify-between items-center text-headline-md font-headline-md text-on-surface">
+                            <span>Total</span>
+                            <span class="text-primary font-bold">${{ pedido.total|formato_pesos }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Details Blocks -->
+                    <div class="space-y-6 pt-4 border-t border-surface-container-high">
+                        <!-- Shipping -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="material-symbols-outlined text-outline text-[20px]">local_shipping</span>
+                                <h4 class="text-label-md font-label-md font-semibold text-on-surface">Dirección de Entrega</h4>
+                            </div>
+                            <div class="pl-7 text-body-sm font-body-sm text-on-surface-variant">
+                                {% if pedido.direccion_cliente %}
+                                    <p class="font-medium text-on-surface">{{ pedido.direccion_cliente.nombre_recibidor }}</p>
+                                    <p>{{ pedido.direccion_cliente.direccion.nomenclatura }}</p>
+                                    <p>Barrio: {{ pedido.direccion_cliente.direccion.barrio }}</p>
+                                    <p>{{ pedido.direccion_cliente.direccion.municipio.nombre }}, {{ pedido.direccion_cliente.direccion.municipio.departamento.nombre }}</p>
+                                    <p>Teléfono: {{ pedido.direccion_cliente.telefono_recibidor }}</p>
+                                {% else %}
+                                    <p class="italic text-on-surface-variant">No se registró dirección física.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
