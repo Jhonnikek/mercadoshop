@@ -1,23 +1,15 @@
-FROM python:3.12-slim-bookworm
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+FROM python:3.12-slim
 
-WORKDIR /app
+COPY --from=ghcr.io/astral-sh/uv:0.10.4 /uv /uvx /bin/
 
-# Copy dependency definition files
+WORKDIR /code
+
 COPY pyproject.toml uv.lock ./
 
-# Install project dependencies
 RUN uv sync --frozen --no-cache
 
-# Copy the rest of the application
-COPY . .
+COPY ./app ./app
 
-# Expose Django port
-EXPOSE 8000
+EXPOSE 80
 
-# Set environment variables to run using uv environment
-ENV PATH="/app/.venv/bin:$PATH"
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-CMD ["python", "app/manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["uv", "run", "gunicorn", "--chdir", "app", "config.wsgi:application", "--bind", "0.0.0.0:80"]
