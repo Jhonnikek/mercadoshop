@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Registrarse - Mercado Shop</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    {% include "includes/tailwind_config.html" %}
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md antialiased overflow-x-hidden">
+<main class="w-full h-screen flex flex-col md:flex-row">
+    <!-- Left Side: Hero (Hidden on Mobile) -->
+    <section class="hidden md:flex md:w-1/2 relative bg-surface-container-high overflow-hidden">
+        <img alt="Registro Mercado Shop" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzShXxPMshuSLo2wU9-QSbZmcx2qei0v327sisMfaQ15v9VpVZ05MSMTtUCY1Ux62dFp4p1Zxqm_O1CXEqx6iz4LdwA7xoYpoHD74L9feCSBMRHpZQ48AN0mUA1k9tvg07YGrLtQjIWzK06-IQi9fLgal3iRfVCiIL4CVM4TTX1gBAtr4J-lQYIVmiKDc33FDjZuMmM9eqtOqFUKqBk-pvbeLUvjdYzcLGzBcFhQAUF0DlMB4IMoAXsjV7JnrHrMTAGJnH3WeliyE"/>
+        <div class="absolute inset-0 bg-gradient-to-t from-on-background/80 via-transparent to-transparent"></div>
+        <div class="absolute bottom-0 left-0 p-12 text-on-primary">
+            <h1 class="text-headline-xl font-headline-xl mb-4 text-white">Únete a Mercado Shop.</h1>
+            <p class="text-body-lg font-body-lg text-white/90 max-w-md">Descubre productos únicos de múltiples tiendas o empieza a vender los tuyos hoy mismo de forma centralizada.</p>
+        </div>
+        <div class="absolute top-8 left-8 flex items-center gap-2 text-white">
+            <span class="material-symbols-outlined text-3xl" data-weight="fill">storefront</span>
+            <span class="text-headline-md font-bold">Mercado Shop</span>
+        </div>
+    </section>
+    
+    <!-- Right Side: Form Container -->
+    <section class="w-full md:w-1/2 flex items-center justify-center p-6 sm:p-12 lg:p-24 bg-surface h-full overflow-y-auto">
+        <div class="md:hidden absolute top-6 left-6 flex items-center gap-2 text-primary">
+            <span class="material-symbols-outlined text-2xl" data-weight="fill">storefront</span>
+            <span class="text-headline-md font-bold">Mercado Shop</span>
+        </div>
+        
+        <div class="w-full max-w-md space-y-8">
+            <div class="text-center md:text-left">
+                <h2 class="text-headline-lg-mobile md:text-headline-lg font-black text-on-surface mb-2">Crear una cuenta</h2>
+                <p class="text-body-md text-on-surface-variant">Completa los detalles para comenzar.</p>
+            </div>
+            
+            {% if error %}
+            <div class="bg-error-container/20 text-on-error-container border border-error/30 p-3 rounded-lg text-body-sm font-body-sm">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <!-- Registration Type Toggle -->
+            <div class="flex p-1 bg-surface-container-highest rounded-lg relative overflow-hidden" id="accountTypeToggle">
+                <div class="absolute top-1 bottom-1 left-1 bg-surface shadow-sm rounded-md transition-all duration-300 ease-out z-0 w-[calc(50%-4px)]" id="toggleIndicator"></div>
+                <button class="flex-1 py-2 px-4 text-label-md font-bold rounded-md relative z-10 transition-colors text-primary" data-type="customer" onclick="setAccountType('customer')" type="button">
+                    Cliente
+                </button>
+                <button class="flex-1 py-2 px-4 text-label-md rounded-md relative z-10 transition-colors text-on-surface-variant" data-type="store" onclick="setAccountType('store')" type="button">
+                    Dueño de Tienda
+                </button>
+            </div>
+            
+            <form action="{% url 'register' %}" method="POST" class="space-y-5">
+                {% csrf_token %}
+                <input type="hidden" name="tipo_usuario" id="tipo_usuario_input" value="CLIENTE">
+
+                <div class="rounded-lg border border-outline-variant bg-surface-container-low p-4">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-label-sm font-label-sm text-on-surface">Categorías</p>
+                            <p class="text-body-sm text-on-surface-variant" id="categoriesHelpText">Selecciona las categorías que más te interesan para personalizar la experiencia.</p>
+                        </div>
+                        <span class="text-label-sm font-semibold text-primary">Base de datos</span>
+                    </div>
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-52 overflow-y-auto pr-1">
+                        {% for categoria in categorias %}
+                            <label class="flex items-start gap-3 rounded-lg border border-outline-variant bg-white p-3 hover:border-primary transition-colors cursor-pointer">
+                                <input class="mt-1 rounded border-outline-variant text-primary focus:ring-primary" name="categorias" value="{{ categoria.id }}" type="checkbox"/>
+                                <span>
+                                    <span class="block text-body-sm font-semibold text-on-surface">{{ categoria.nombre_categoria }}</span>
+                                    <span class="block text-label-sm text-on-surface-variant">{% if categoria.categoria_padre %}{{ categoria.categoria_padre.nombre_categoria }}{% else %}Categoría principal{% endif %}</span>
+                                </span>
+                            </label>
+                        {% empty %}
+                            <p class="text-body-sm text-on-surface-variant">No hay categorías cargadas todavía.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Dynamic Field (Only shows for Store) -->
+                <div class="hidden opacity-0 transition-opacity duration-300" id="storeNameField">
+                    <label class="block text-label-sm font-label-sm text-on-surface mb-1.5" for="store_name">Nombre de la Tienda</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">store</span>
+                        <input class="block w-full pl-10 pr-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 outline-none" id="store_name" name="store_name" placeholder="Ej: ElectroShop, Moda Express" type="text"/>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-label-sm font-label-sm text-on-surface mb-1.5" for="name">Nombre Completo</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">person</span>
+                        <input class="block w-full pl-10 pr-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 outline-none" id="name" name="name" placeholder="Pepito Perez" required="" type="text"/>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-label-sm font-label-sm text-on-surface mb-1.5" for="email">Correo Electrónico</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">mail</span>
+                        <input class="block w-full pl-10 pr-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 outline-none" id="email" name="email" placeholder="correo@ejemplo.com" required="" type="email"/>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-label-sm font-label-sm text-on-surface mb-1.5" for="password">Contraseña</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">lock</span>
+                        <input class="block w-full pl-10 pr-10 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 outline-none" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+                        <button class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors" onclick="togglePassword()" type="button">
+                            <span class="material-symbols-outlined text-xl" id="visibilityIcon">visibility_off</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-label-md font-semibold text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200" type="submit">
+                    Crear Cuenta
+                </button>
+            </form>
+            
+            <p class="mt-8 text-center text-body-sm text-on-surface-variant">
+                ¿Ya tienes una cuenta? 
+                <a class="font-semibold text-primary hover:text-primary-container transition-colors" href="{% url 'login' %}">Inicia sesión aquí</a>
+            </p>
+        </div>
+    </section>
+</main>
+
+<script>
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const visibilityIcon = document.getElementById('visibilityIcon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            visibilityIcon.textContent = 'visibility';
+        } else {
+            passwordInput.type = 'password';
+            visibilityIcon.textContent = 'visibility_off';
+        }
+    }
+
+    function setAccountType(type) {
+        const buttons = document.querySelectorAll('#accountTypeToggle button');
+        const indicator = document.getElementById('toggleIndicator');
+        const storeNameField = document.getElementById('storeNameField');
+        const storeNameInput = document.getElementById('store_name');
+        const tipoUsuarioInput = document.getElementById('tipo_usuario_input');
+        const categoriesHelpText = document.getElementById('categoriesHelpText');
+        
+        buttons.forEach(btn => {
+            if (btn.dataset.type === type) {
+                btn.classList.add('text-primary', 'font-bold');
+                btn.classList.remove('text-on-surface-variant');
+            } else {
+                btn.classList.remove('text-primary', 'font-bold');
+                btn.classList.add('text-on-surface-variant');
+            }
+        });
+
+        if (type === 'store') {
+            indicator.style.transform = 'translateX(100%)';
+            tipoUsuarioInput.value = 'TRABAJADOR';
+            categoriesHelpText.textContent = 'Selecciona las categorías que venderá tu tienda para aparecer en el marketplace.';
+            storeNameField.classList.remove('hidden');
+            setTimeout(() => {
+                storeNameField.classList.remove('opacity-0');
+                storeNameField.classList.add('opacity-100');
+            }, 10);
+            storeNameInput.required = true;
+        } else {
+            indicator.style.transform = 'translateX(0)';
+            tipoUsuarioInput.value = 'CLIENTE';
+            categoriesHelpText.textContent = 'Selecciona las categorías que más te interesan para personalizar la experiencia.';
+            storeNameField.classList.remove('opacity-100');
+            storeNameField.classList.add('opacity-0');
+            setTimeout(() => {
+                storeNameField.classList.add('hidden');
+            }, 300);
+            storeNameInput.required = false;
+            storeNameInput.value = '';
+        }
+    }
+</script>
+</body>
+</html>

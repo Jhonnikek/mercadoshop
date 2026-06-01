@@ -1,0 +1,170 @@
+{% load core_tags %}<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Catálogo de Productos - Mercado Shop</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+    {% include "includes/tailwind_config.html" %}
+</head>
+<body class="antialiased min-h-screen flex flex-col bg-background">
+    <!-- TopNavBar -->
+    <nav class="bg-surface dark:bg-on-surface w-full z-50 sticky top-0 border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none bg-white">
+        <div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-16">
+            <div class="flex items-center gap-6">
+                <a class="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed-dim" href="{% url 'home' %}">Mercado Shop</a>
+                <div class="hidden md:flex items-center gap-8 h-full">
+                    <a class="text-primary dark:text-primary-fixed-dim border-b-2 border-primary dark:border-primary-fixed-dim font-semibold text-label-md font-label-md" href="{% url 'catalogo' %}">Catálogo Completo</a>
+                    <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors text-label-md font-label-md" href="{% url 'test_dashboard' %}">Mi Panel</a>
+                    {% if user.is_superuser or user.tipo_usuario == 'ADMIN' %}
+                        <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors text-label-md font-label-md" href="/admin/">Django Admin</a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Search bar -->
+            <form method="GET" action="{% url 'catalogo' %}" class="hidden md:flex flex-1 max-w-md mx-8">
+                <div class="relative w-full">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">search</span>
+                    <input name="q" value="{{ query|default:'' }}" class="w-full h-10 pl-10 pr-4 rounded-full bg-surface-container-low border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-body-sm font-body-sm text-on-surface outline-none" placeholder="Buscar productos, marcas..." type="text"/>
+                </div>
+            </form>
+
+            <div class="flex items-center gap-4">
+                {% if user.is_authenticated and user.tipo_usuario == 'CLIENTE' %}
+                    <a href="{% url 'carrito_detalle' %}" class="relative text-on-surface-variant hover:text-primary transition-colors p-2 flex items-center justify-center" title="Carrito de Compras">
+                        <span class="material-symbols-outlined text-[24px]">shopping_cart</span>
+                        {% if cart_items_count > 0 %}
+                            <span class="absolute -top-0.5 -right-0.5 bg-error text-on-error text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                                {{ cart_items_count }}
+                            </span>
+                        {% endif %}
+                    </a>
+                {% endif %}
+                {% if user.is_authenticated %}
+                    <span class="text-body-sm font-medium">Hola, {{ user.username }}</span>
+                {% else %}
+                    <a href="{% url 'login' %}" class="bg-primary text-on-primary px-4 py-2 rounded-lg text-label-md font-label-md hover:bg-primary/90 transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">login</span>
+                        Iniciar Sesión
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Layout -->
+    <main class="flex-1 w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 flex flex-col lg:flex-row gap-gutter">
+        
+        <!-- Sidebar Filters -->
+        <aside class="w-full lg:w-64 shrink-0">
+            <form method="GET" action="{% url 'catalogo' %}" class="bg-white rounded-xl border border-outline-variant p-6 shadow-sm sticky top-24 space-y-6">
+                <!-- Search for mobile (hidden on desktop) -->
+                <div class="md:hidden">
+                    <label class="block text-label-md font-label-md text-on-surface-variant mb-2">Buscar</label>
+                    <input name="q" value="{{ query|default:'' }}" class="w-full h-10 px-3 rounded-lg bg-surface-container-low border border-outline-variant text-body-sm outline-none" placeholder="Escribe aquí..." type="text"/>
+                </div>
+
+                <h2 class="text-headline-sm font-headline-md text-on-surface border-b border-outline-variant pb-2">Filtros</h2>
+                
+                <!-- Category Checklist -->
+                <div>
+                    <h3 class="text-label-md font-label-md text-on-surface-variant mb-3 uppercase tracking-wider">Categorías</h3>
+                    <div class="flex flex-col gap-3">
+                        {% for cat in categorias %}
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input name="category_id" value="{{ cat.id }}" {% if cat.id in selected_categorias %}checked{% endif %} class="rounded border-outline-variant text-primary focus:ring-primary w-4 h-4 bg-surface-container-low" type="checkbox"/>
+                            <span class="text-body-sm font-body-sm text-on-surface group-hover:text-primary transition-colors">{{ cat.nombre_categoria }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Price Range -->
+                <div>
+                    <h3 class="text-label-md font-label-md text-on-surface-variant mb-3 uppercase tracking-wider">Rango de Precio</h3>
+                    <div class="flex items-center justify-between gap-2">
+                        <input name="min_price" value="{{ min_price|default:'' }}" class="w-full h-10 px-3 rounded-lg bg-surface-container-low border border-outline-variant text-body-sm focus:border-primary outline-none" placeholder="Min" type="number"/>
+                        <span class="text-outline-variant">-</span>
+                        <input name="max_price" value="{{ max_price|default:'' }}" class="w-full h-10 px-3 rounded-lg bg-surface-container-low border border-outline-variant text-body-sm focus:border-primary outline-none" placeholder="Max" type="number"/>
+                    </div>
+                </div>
+
+                <!-- Submit and Clear -->
+                <div class="pt-4 space-y-2">
+                    <button type="submit" class="w-full py-2 bg-primary text-on-primary rounded-lg text-label-md font-semibold hover:bg-primary/95 transition-colors shadow-sm">
+                        Aplicar Filtros
+                    </button>
+                    <a href="{% url 'catalogo' %}" class="block text-center w-full py-2 border border-outline-variant text-on-surface-variant rounded-lg text-label-md hover:bg-surface-container transition-colors">
+                        Limpiar Filtros
+                    </a>
+                </div>
+            </form>
+        </aside>
+
+        <!-- Product Grid Area -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Grid Header Info -->
+            <div class="mb-6 flex items-baseline gap-3">
+                <h1 class="text-headline-lg font-headline-lg text-on-surface">Catálogo de Productos</h1>
+                <span class="text-body-md font-body-md text-on-surface-variant">{{ productos.count }} artículos encontrados</span>
+            </div>
+
+            <!-- Asymmetric Grid Layout -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-gutter">
+                {% for prod in productos %}
+                <div class="group relative bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+                    <div class="relative h-48 bg-[#F8FAFC] overflow-hidden flex items-center justify-center">
+                        {% if prod.url_imagen_principal %}
+                            <img alt="{{ prod.descripcion_corta }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="{{ prod.url_imagen_principal }}"/>
+                        {% else %}
+                            <span class="material-symbols-outlined text-outline text-5xl">image</span>
+                        {% endif %}
+                    </div>
+                    <div class="p-5 flex flex-col flex-1 justify-between">
+                        <div>
+                            <span class="text-label-sm font-label-sm text-primary mb-1 block">{{ prod.tienda.nombre_comercial }}</span>
+                            <h3 class="text-body-lg font-body-lg font-semibold text-on-surface mb-2 line-clamp-2 leading-tight">
+                                {{ prod.descripcion_corta }}
+                            </h3>
+                            <p class="text-body-sm text-on-surface-variant line-clamp-2 mb-4">
+                                {{ prod.descripcion_larga|default:"" }}
+                            </p>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-outline-variant/30">
+                            <div>
+                                <span class="text-headline-md font-bold text-on-surface font-black">${{ prod.precio_unitario|formato_pesos }}</span>
+                                {% if prod.cantidad_stock == 0 %}
+                                    <span class="block text-error text-label-sm font-semibold">Agotado</span>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'producto_detalle' prod.id %}" class="px-4 py-2 bg-primary text-on-primary rounded-lg text-label-sm font-semibold hover:bg-primary/95 transition-colors shadow-sm">
+                                Ver Detalles
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-full py-16 text-center text-on-surface-variant bg-white border border-outline-variant rounded-xl">
+                    <span class="material-symbols-outlined text-5xl text-outline mb-2">search_off</span>
+                    <p class="text-body-lg font-semibold">No se encontraron productos</p>
+                    <p class="text-body-md mt-1">Prueba a buscar otro término o limpia los filtros.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full bg-surface-container-highest border-t border-outline-variant mt-auto bg-[#F8FAFC]">
+        <div class="w-full py-8 px-margin-desktop max-w-container-max mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <span class="text-headline-md font-bold text-primary block mb-1">Mercado Shop</span>
+                <p class="text-body-sm text-on-surface-variant">© 2026 Mercado Shop Inc. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+{% load core_tags %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Pruebas - Mercado Shop MVP</title>
+</head>
+<body>
+    <h1>Mercado Shop - Panel de Pruebas</h1>
+    <p>Bienvenido, <strong>{{ usuario.username }}</strong> (Rol: <strong>{{ usuario.get_tipo_usuario_display }}</strong>)</p>
+    <p><a href="{% url 'logout' %}">Cerrar Sesión</a> | <a href="/admin/">Ir al Django Admin</a></p>
+    
+    <hr>
+    
+    <h2>Mis Tiendas ({{ tiendas|length }})</h2>
+    {% if tiendas %}
+        <table border="1" cellpadding="5">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre Comercial</th>
+                    <th>Estado</th>
+                    <th>Teléfono</th>
+                    <th>Plan ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tienda in tiendas %}
+                    <tr>
+                        <td>{{ tienda.id }}</td>
+                        <td>{{ tienda.nombre_comercial }}</td>
+                        <td>{{ tienda.estado_tienda }}</td>
+                        <td>{{ tienda.telefono_atencion }}</td>
+                        <td>{{ tienda.plan_id }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No hay tiendas asociadas o visibles.</p>
+    {% endif %}
+
+    <hr>
+
+    <h2>Productos ({{ productos|length }})</h2>
+    {% if productos %}
+        <table border="1" cellpadding="5">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tienda</th>
+                    <th>Descripción Corta</th>
+                    <th>Precio Unitario</th>
+                    <th>Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prod in productos %}
+                    <tr>
+                        <td>{{ prod.id }}</td>
+                        <td>{{ prod.tienda.nombre_comercial }}</td>
+                        <td>{{ prod.descripcion_corta }}</td>
+                        <td>${{ prod.precio_unitario|formato_pesos }}</td>
+                        <td>{{ prod.cantidad_stock }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No hay productos disponibles.</p>
+    {% endif %}
+
+    <hr>
+
+    <h2>Pedidos ({{ pedidos|length }})</h2>
+    {% if pedidos %}
+        <table border="1" cellpadding="5">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Comprobante</th>
+                    <th>Cliente</th>
+                    <th>Subtotal</th>
+                    <th>Costo Envió</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ped in pedidos %}
+                    <tr>
+                        <td>{{ ped.id }}</td>
+                        <td>{{ ped.numero_comprobante }}</td>
+                        <td>{{ ped.cliente.username }}</td>
+                        <td>${{ ped.subtotal|formato_pesos }}</td>
+                        <td>${{ ped.costo_envio|formato_pesos }}</td>
+                        <td>${{ ped.total|formato_pesos }}</td>
+                        <td>{{ ped.estado_pedido.nombre_estado }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No hay pedidos para mostrar.</p>
+    {% endif %}
+</body>
+</html>

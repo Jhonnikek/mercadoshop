@@ -1,0 +1,122 @@
+{% load core_tags %}<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Pedido Exitoso - Mercado Shop</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    {% include "includes/tailwind_config.html" %}
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col antialiased">
+<!-- TopNavBar -->
+<header class="bg-surface border-b border-outline-variant shadow-sm w-full sticky top-0 z-50">
+    <div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto h-16">
+        <div class="flex items-center gap-6">
+            <a class="text-headline-md font-headline-md font-bold text-primary" href="{% url 'home' %}">Mercado Shop</a>
+        </div>
+        <div class="flex items-center gap-4">
+            <a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="{% url 'catalogo' %}">Catálogo</a>
+            {% if user.is_authenticated and user.tipo_usuario == 'CLIENTE' %}
+                <a href="{% url 'carrito_detalle' %}" class="relative text-on-surface-variant hover:text-primary transition-colors p-2 flex items-center justify-center" title="Carrito de Compras">
+                    <span class="material-symbols-outlined text-[24px]">shopping_cart</span>
+                    {% if cart_items_count > 0 %}
+                        <span class="absolute -top-0.5 -right-0.5 bg-error text-on-error text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                            {{ cart_items_count }}
+                        </span>
+                    {% endif %}
+                </a>
+            {% endif %}
+            {% if user.is_authenticated %}
+                <span class="text-body-sm text-on-surface-variant hidden md:inline">Hola, <strong>{{ user.username }}</strong></span>
+                <a class="text-label-md font-label-md text-primary hover:underline" href="{% url 'test_dashboard' %}">Mi Panel</a>
+                {% if user.is_superuser or user.tipo_usuario == 'ADMIN' %}
+                    <a class="text-label-md font-label-md text-primary hover:underline" href="/admin/">Django Admin</a>
+                {% endif %}
+                <form action="{% url 'logout' %}" method="POST" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="text-label-md font-label-md text-outline hover:text-error transition-colors">Salir</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="bg-primary text-on-primary px-4 py-2 rounded-lg text-label-md font-label-md hover:bg-primary/90 transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">login</span>
+                    Iniciar Sesión
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</header>
+
+<!-- Main Content Area -->
+<main class="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col items-center justify-center">
+    <div class="bg-white border border-outline-variant rounded-xl p-8 md:p-12 shadow-sm text-center max-w-2xl w-full flex flex-col items-center gap-6">
+        <!-- Success Animation Icon -->
+        <div class="w-20 h-20 bg-secondary/15 rounded-full flex items-center justify-center text-secondary border border-secondary/30 mb-2">
+            <span class="material-symbols-outlined text-[48px]" style="font-variation-settings: 'wght' 600;">check_circle</span>
+        </div>
+        
+        <!-- Headers -->
+        <div>
+            <h1 class="text-3xl font-black text-on-surface mb-2">¡Pedido Realizado con Éxito!</h1>
+            <p class="text-body-md text-on-surface-variant">Gracias por tu compra. Tu pedido ha sido registrado en el sistema local.</p>
+        </div>
+
+        <!-- Receipt Details Box -->
+        <div class="w-full bg-surface-container-low border border-outline-variant rounded-xl p-6 text-left flex flex-col gap-4 text-body-sm mt-2">
+            <div class="flex justify-between items-center pb-3 border-b border-outline-variant/30 font-bold text-on-surface">
+                <span>Número de comprobante:</span>
+                <span class="text-primary font-black">{{ pedido.numero_comprobante }}</span>
+            </div>
+            
+            <!-- Address details -->
+            <div class="flex flex-col gap-1.5">
+                <span class="font-bold text-on-surface-variant">Datos de entrega:</span>
+                <span class="text-on-surface"><strong>Recibe:</strong> {{ pedido.direccion_cliente.nombre_recibidor }} (Tel: {{ pedido.direccion_cliente.telefono_recibidor }})</span>
+                <span class="text-on-surface"><strong>Dirección:</strong> {{ pedido.direccion_cliente.direccion.nomenclatura }}, {{ pedido.direccion_cliente.direccion.barrio }}</span>
+                <span class="text-on-surface"><strong>Ciudad/Región:</strong> {{ pedido.direccion_cliente.direccion.municipio.nombre }} ({{ pedido.direccion_cliente.direccion.municipio.departamento.nombre }})</span>
+            </div>
+
+            <!-- Price Breakdown -->
+            <div class="border-t border-outline-variant/30 pt-3 flex flex-col gap-2 font-semibold">
+                <div class="flex justify-between text-on-surface-variant">
+                    <span>Subtotal de productos:</span>
+                    <span>${{ pedido.subtotal|formato_pesos }}</span>
+                </div>
+                <div class="flex justify-between text-on-surface-variant">
+                    <span>Costo de envío:</span>
+                    <span>${{ pedido.costo_envio|formato_pesos }}</span>
+                </div>
+                <div class="flex justify-between text-on-surface font-bold text-body-md pt-2 border-t border-outline-variant/10">
+                    <span>Total facturado:</span>
+                    <span class="text-primary font-black">${{ pedido.total|formato_pesos }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-4 w-full justify-center mt-4">
+            <a href="{% url 'historial_pedidos' %}" class="bg-primary text-on-primary font-bold px-6 h-12 rounded-lg hover:bg-primary/95 transition-colors flex items-center justify-center gap-2 shadow-sm">
+                <span class="material-symbols-outlined text-[20px]">assignment</span>
+                Ver Mis Pedidos
+            </a>
+            <a href="{% url 'home' %}" class="border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors font-bold px-6 h-12 rounded-lg flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">storefront</span>
+                Volver a la Tienda
+            </a>
+        </div>
+    </div>
+</main>
+
+<footer class="bg-surface-container-highest border-t border-outline-variant py-8 w-full mt-auto">
+    <div class="max-w-container-max mx-auto px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-4 text-center">
+        <span class="text-headline-sm font-black text-primary">Mercado Shop</span>
+        <span class="text-body-sm text-on-surface-variant">© 2026 Mercado Shop Inc. Todos los derechos reservados.</span>
+    </div>
+</footer>
+</body>
+</html>
