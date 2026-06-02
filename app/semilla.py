@@ -26,6 +26,9 @@ def crear_datos():
     
     # 4. Crear Estado de Pedido
     estado_creado, _ = EstadoPedido.objects.get_or_create(nombre_estado="Creado")
+    estado_procesando, _ = EstadoPedido.objects.get_or_create(nombre_estado="Procesando")
+    estado_listo, _ = EstadoPedido.objects.get_or_create(nombre_estado="Listo para Enviar")
+    estado_enviado, _ = EstadoPedido.objects.get_or_create(nombre_estado="Enviado")
     estado_entregado, _ = EstadoPedido.objects.get_or_create(nombre_estado="Entregado")
     
     # 5. Crear Rol de Trabajador

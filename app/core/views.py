@@ -156,13 +156,14 @@ def home(request):
         .filter(total_productos__gt=0)
         .order_by('-total_productos', 'nombre_categoria')[:6]
     )
+    tiendas_por_ventas = tiendas.annotate(ventas=Count('productos__detallepedido')).order_by('-ventas', 'nombre_comercial')[:6]
     context = {
         'tiendas': tiendas,
         'productos': productos,
         'tiendas_count': tiendas.count(),
         'productos_count': productos.count(),
         'categorias_count': Categoria.objects.filter(estado=True).count(),
-        'tiendas_destacadas': tiendas[:6],
+        'tiendas_destacadas': tiendas_por_ventas,
         'productos_destacados': productos[:8],
         'categorias_destacadas': categorias_destacadas,
     }
