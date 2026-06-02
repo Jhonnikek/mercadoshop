@@ -7,8 +7,6 @@ services:
       - "80:80"
     env_file:
       - .env
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres_secure_pass_123@db:5432/mercadoshop
     depends_on:
       - db
 
@@ -18,10 +16,6 @@ services:
     restart: always
     env_file:
       - .env
-    environment:
-      - POSTGRES_DB=mercadoshop
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres_secure_pass_123
     volumes:
       - pgdata:/var/lib/postgresql/data
 
