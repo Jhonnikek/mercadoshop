@@ -1349,8 +1349,56 @@ def admin_pedido_eliminar_view(request, pk):
         pedido.delete()
     return redirect('admin_pedidos')
 
+# Nuevos ViewSets de API REST
+from .models import Rol, TransaccionPasarela, TiendaAdmin
+from .serializers import (
+    EstadoPedidoSerializer, RolSerializer, CategoriaSerializer,
+    DireccionClienteSerializer, CarritoSerializer, ItemCarritoSerializer,
+    TrabajadorTiendaSerializer, TransaccionPasarelaSerializer,
+    TiendaAdminSerializer
+)
 
+class EstadoPedidoViewSet(viewsets.ModelViewSet):
+    queryset = EstadoPedido.objects.all()
+    serializer_class = EstadoPedidoSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+class RolViewSet(viewsets.ModelViewSet):
+    queryset = Rol.objects.all()
+    serializer_class = RolSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+class CategoriaViewSet(viewsets.ModelViewSet):
+    queryset = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+class DireccionClienteViewSet(viewsets.ModelViewSet):
+    queryset = DireccionCliente.objects.all()
+    serializer_class = DireccionClienteSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+class CarritoViewSet(viewsets.ModelViewSet):
+    queryset = Carrito.objects.all()
+    serializer_class = CarritoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class ItemCarritoViewSet(viewsets.ModelViewSet):
+    queryset = ItemCarrito.objects.all()
+    serializer_class = ItemCarritoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class TrabajadorTiendaViewSet(viewsets.ModelViewSet):
+    queryset = TrabajadorTienda.objects.all()
+    serializer_class = TrabajadorTiendaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class TransaccionPasarelaViewSet(viewsets.ModelViewSet):
+    queryset = TransaccionPasarela.objects.all()
+    serializer_class = TransaccionPasarelaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class TiendaAdminViewSet(viewsets.ModelViewSet):
+    queryset = TiendaAdmin.objects.all()
+    serializer_class = TiendaAdminSerializer
+    permission_classes = [permissions.IsAuthenticated]
