@@ -50,8 +50,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     
-    # App del núcleo
-    'core',
+    # Apps del proyecto
+    'panel_admin',
+    'tiendas',
+    'clientes',
 ]
 
 MIDDLEWARE = [
@@ -76,7 +78,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'core.context_processors.cart_counter',
             ],
         },
     },
@@ -89,8 +90,18 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': env.db(),
+    'default': {
+        **env.db(),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'sql_mode': 'STRICT_TRANS_TABLES',
+            'init_command': "SET innodb_strict_mode=1",
+        },
+    },
 }
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Password validation
@@ -131,8 +142,8 @@ STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Modelo de usuario personalizado
-AUTH_USER_MODEL = 'core.Usuario'
+# Modelo de usuario personalizado (eliminado, se usa el por defecto por ahora)
+# AUTH_USER_MODEL = 'core.Usuario'
 
 # Configuración de Django REST Framework
 REST_FRAMEWORK = {
@@ -143,7 +154,6 @@ REST_FRAMEWORK = {
 }
 
 # Redirecciones para el entorno de pruebas
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/dashboard/'
-LOGOUT_REDIRECT_URL = '/login/'
-
+LOGIN_URL = '/panel/login/'
+LOGIN_REDIRECT_URL = '/panel/'
+LOGOUT_REDIRECT_URL = '/panel/login/'
