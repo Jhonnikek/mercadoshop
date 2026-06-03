@@ -11,4 +11,5 @@ urlpatterns = [
     path('tiendas/crear/', views.crearTiendaAjax, name='crear_tienda_ajax'),
     path('tiendas/<int:id>/editar/', views.editarTiendaAjax, name='editar_tienda_ajax'),
     path('tiendas/<int:id>/eliminar/', views.eliminarTiendaAjax, name='eliminar_tienda_ajax'),
+    path('tiendas/<int:id>/detalle/', views.detalleTiendaAjax, name='detalle_tienda_ajax'),
 ]

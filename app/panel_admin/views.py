@@ -47,6 +47,12 @@ def editarTiendaAjax(request, id):
         tienda.nombre = request.POST.get('nombre', tienda.nombre)
         tienda.direccion = request.POST.get('direccion', tienda.direccion)
         tienda.save()
+        
+        password = request.POST.get('password')
+        if password and tienda.usuario:
+            tienda.usuario.set_password(password)
+            tienda.usuario.save()
+            
         return JsonResponse({'status': 'success', 'id': tienda.id, 'nombre': tienda.nombre, 'direccion': tienda.direccion})
     return JsonResponse({'status': 'error'}, status=400)
 
@@ -55,6 +61,22 @@ def editarTiendaAjax(request, id):
 def eliminarTiendaAjax(request, id):
     tienda = get_object_or_404(Tienda, id=id)
     if request.method == 'POST':
+        if tienda.usuario:
+            tienda.usuario.delete()
         tienda.delete()
         return JsonResponse({'status': 'success'})
     return JsonResponse({'status': 'error'}, status=400)
+
+@staff_member_required(login_url='login')
+def detalleTiendaAjax(request, id):
+    tienda = get_object_or_404(Tienda, id=id)
+    return JsonResponse({
+        'status': 'success',
+        'tienda': {
+            'id': tienda.id,
+            'nombre': tienda.nombre,
+            'direccion': tienda.direccion,
+            'username': tienda.usuario.username if tienda.usuario else 'Sin usuario',
+            'fecha_creacion': tienda.fecha_creacion.strftime('%d/%m/%Y %H:%M') if tienda.fecha_creacion else 'Desconocida'
+        }
+    })

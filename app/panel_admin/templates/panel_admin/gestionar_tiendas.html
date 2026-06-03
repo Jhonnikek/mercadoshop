@@ -71,6 +71,9 @@
                                 </td>
                                 <td class="p-4 text-right">
                                     <div class="flex items-center justify-end gap-2">
+                                        <button onclick="openDetailModal({{ tienda.id }})" class="px-2.5 py-1 bg-secondary/10 text-secondary hover:bg-secondary hover:text-white rounded-md text-label-sm font-semibold transition-all">
+                                            Detalles
+                                        </button>
                                         <button onclick="openModal('edit', {{ tienda.id }}, '{{ tienda.nombre|escapejs }}', '{{ tienda.direccion|escapejs }}')" class="px-2.5 py-1 bg-surface-container-high hover:bg-primary/10 hover:text-primary rounded-md text-label-sm font-semibold transition-all edit-btn">
                                             Editar
                                         </button>
@@ -94,8 +97,45 @@
         </div>
     </main>
 
+    <!-- Modal Detalles -->
+    <div id="detailModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" style="display:none;">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center">
+                <h3 class="text-headline-sm font-bold">Detalles de Tienda</h3>
+                <button onclick="closeDetailModal()" class="text-surface-variant hover:text-on-surface">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <p class="text-label-sm text-on-surface-variant font-semibold">ID</p>
+                    <p id="det-id" class="text-body-md text-on-surface"></p>
+                </div>
+                <div>
+                    <p class="text-label-sm text-on-surface-variant font-semibold">Nombre</p>
+                    <p id="det-nombre" class="text-body-md text-on-surface"></p>
+                </div>
+                <div>
+                    <p class="text-label-sm text-on-surface-variant font-semibold">Dirección</p>
+                    <p id="det-direccion" class="text-body-md text-on-surface"></p>
+                </div>
+                <div>
+                    <p class="text-label-sm text-on-surface-variant font-semibold">Usuario Asociado</p>
+                    <p id="det-username" class="text-body-md text-on-surface"></p>
+                </div>
+                <div>
+                    <p class="text-label-sm text-on-surface-variant font-semibold">Fecha de Creación</p>
+                    <p id="det-fecha" class="text-body-md text-on-surface"></p>
+                </div>
+                <div class="flex justify-end pt-4">
+                    <button onclick="closeDetailModal()" class="px-4 py-2 bg-surface-container-high rounded-lg text-label-md font-semibold">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal CRUD (Tailwind) -->
-    <div id="crudModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div id="crudModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" style="display:none;">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
             <div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center">
                 <h3 id="modalTitle" class="text-headline-sm font-bold">Nueva Tienda</h3>
@@ -123,8 +163,9 @@
                     <input type="text" id="tienda-username" class="w-full border-outline-variant rounded-lg p-2 focus:ring-primary focus:border-primary">
                 </div>
                 <div class="mb-6" id="div-password">
-                    <label class="block text-label-md font-medium text-on-surface mb-1">Contraseña</label>
+                    <label class="block text-label-md font-medium text-on-surface mb-1" id="label-password">Contraseña</label>
                     <input type="password" id="tienda-password" class="w-full border-outline-variant rounded-lg p-2 focus:ring-primary focus:border-primary">
+                    <p id="help-password" class="text-body-sm text-on-surface-variant mt-1" style="display:none;">Déjala en blanco si no deseas cambiarla.</p>
                 </div>
                 <div class="flex gap-3 justify-end">
                     <button type="button" onclick="closeModal()" class="px-4 py-2 bg-surface-container-high rounded-lg text-label-md font-semibold">Cancelar</button>
@@ -137,6 +178,7 @@
     <script>
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         const modal = document.getElementById('crudModal');
+        const detailModal = document.getElementById('detailModal');
         const form = document.getElementById('crudForm');
 
         function openModal(action, id='', nombre='', direccion='') {
@@ -146,13 +188,21 @@
             document.getElementById('tienda-direccion').value = direccion;
             document.getElementById('modalTitle').innerText = action === 'create' ? 'Nueva Tienda' : 'Editar Tienda';
             
-            // Ocultar campos de usuario si es edición
-            const displayCreds = action === 'create' ? 'block' : 'none';
-            document.getElementById('div-username').style.display = displayCreds;
-            document.getElementById('div-password').style.display = displayCreds;
-            document.getElementById('credenciales-title').style.display = displayCreds;
-            document.getElementById('tienda-username').required = (action === 'create');
-            document.getElementById('tienda-password').required = (action === 'create');
+            // Mostrar u ocultar campo de usuario dependiendo si es crear o editar
+            // El usuario solo se crea, no se edita. La contraseña sí se puede cambiar.
+            if(action === 'create') {
+                document.getElementById('div-username').style.display = 'block';
+                document.getElementById('tienda-username').required = true;
+                document.getElementById('tienda-password').required = true;
+                document.getElementById('label-password').innerText = "Contraseña";
+                document.getElementById('help-password').style.display = 'none';
+            } else {
+                document.getElementById('div-username').style.display = 'none';
+                document.getElementById('tienda-username').required = false;
+                document.getElementById('tienda-password').required = false;
+                document.getElementById('label-password').innerText = "Nueva Contraseña";
+                document.getElementById('help-password').style.display = 'block';
+            }
             document.getElementById('tienda-username').value = '';
             document.getElementById('tienda-password').value = '';
             
@@ -161,6 +211,27 @@
 
         function closeModal() {
             modal.style.display = 'none';
+        }
+        
+        function openDetailModal(id) {
+            fetch(`/panel/tiendas/${id}/detalle/`)
+            .then(r => r.json())
+            .then(res => {
+                if(res.status === 'success') {
+                    document.getElementById('det-id').innerText = `ST-${res.tienda.id}`;
+                    document.getElementById('det-nombre').innerText = res.tienda.nombre;
+                    document.getElementById('det-direccion').innerText = res.tienda.direccion;
+                    document.getElementById('det-username').innerText = res.tienda.username;
+                    document.getElementById('det-fecha').innerText = res.tienda.fecha_creacion;
+                    detailModal.style.display = 'flex';
+                } else {
+                    alert('Error al cargar detalles');
+                }
+            });
+        }
+        
+        function closeDetailModal() {
+            detailModal.style.display = 'none';
         }
 
         form.onsubmit = function(e) {
@@ -178,6 +249,11 @@
             if (action === 'create') {
                 data.append('username', username);
                 data.append('password', password);
+            } else {
+                // Si es edit, enviamos la password solo si se llenó
+                if (password.trim() !== '') {
+                    data.append('password', password);
+                }
             }
             
             const url = action === 'create' ? "{% url 'crear_tienda_ajax' %}" : `/panel/tiendas/${id}/editar/`;
@@ -211,6 +287,7 @@
                             <td class="p-4 text-on-surface-variant t-direccion">${res.direccion}</td>
                             <td class="p-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
+                                    <button onclick="openDetailModal(${res.id})" class="px-2.5 py-1 bg-secondary/10 text-secondary hover:bg-secondary hover:text-white rounded-md text-label-sm font-semibold transition-all">Detalles</button>
                                     <button onclick="openModal('edit', ${res.id}, '${res.nombre.replace(/'/g, "\\'")}', '${res.direccion.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-surface-container-high hover:bg-primary/10 hover:text-primary rounded-md text-label-sm font-semibold transition-all edit-btn">Editar</button>
                                     <button onclick="deleteTienda(${res.id})" class="px-2.5 py-1 bg-error/10 text-error hover:bg-error hover:text-on-error rounded-md text-label-sm font-semibold transition-all">Eliminar</button>
                                 </div>
