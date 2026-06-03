@@ -58,10 +58,23 @@
                             </span>
                         </div>
                         
-                        <!-- Visual Stepper simulation -->
-                        <div class="flex items-center justify-between px-2 py-4 bg-[#F8FAFC] rounded-lg">
-                            <span class="text-body-md">Estado Actual en la plataforma: <strong>{{ pedido.estado_pedido.nombre_estado }}</strong></span>
-                        </div>
+                        <!-- Update Status Form -->
+                        <form method="POST" class="mt-4 flex flex-col sm:flex-row sm:items-center gap-4 bg-[#F8FAFC] p-4 rounded-lg border border-[#F1F5F9]">
+                            {% csrf_token %}
+                            <div class="flex-grow">
+                                <label for="estado_id" class="block text-label-sm font-label-sm text-on-surface-variant mb-1">Actualizar Estado del Pedido</label>
+                                <select name="estado_id" id="estado_id" class="w-full rounded-md border-outline-variant bg-white text-body-sm focus:border-primary focus:ring-primary">
+                                    {% for estado in estados %}
+                                        <option value="{{ estado.id }}" {% if pedido.estado_pedido.id == estado.id %}selected{% endif %}>
+                                            {{ estado.nombre_estado }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="sm:self-end px-4 py-2 bg-primary text-white text-label-md font-label-md font-bold rounded-lg hover:bg-primary/90 transition-colors shadow-sm">
+                                Guardar Cambios
+                            </button>
+                        </form>
                     </div>
 
                     <!-- Items Ordered Table -->

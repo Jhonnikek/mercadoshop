@@ -190,7 +190,7 @@
                 <p class="text-sm font-bold uppercase tracking-[0.2em] text-primary">Categorías</p>
                 <h2 class="mt-2 text-3xl font-black text-text">Corredores comerciales dentro del centro comercial digital</h2>
             </div>
-            <a class="hidden sm:inline-flex text-sm font-bold text-primary hover:underline" href="{% url 'catalogo' %}">Ver todo el catálogo</a>
+            <a class="hidden sm:inline-flex items-center justify-center rounded-full bg-primary px-6 py-2 text-sm font-bold text-white shadow-md shadow-primary/30 transition hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg" href="{% url 'catalogo' %}">Ver todo el catálogo</a>
         </div>
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {% for categoria in categorias_destacadas %}
@@ -217,10 +217,10 @@
     <section class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-14 md:py-20" id="tiendas">
         <div class="flex items-end justify-between gap-4 mb-6">
             <div>
-                <p class="text-sm font-bold uppercase tracking-[0.2em] text-secondary">Tiendas</p>
-                <h2 class="mt-2 text-3xl font-black text-text">Locales abiertos para recorrer y comparar</h2>
+                <p class="text-sm font-bold uppercase tracking-[0.2em] text-secondary">Tiendas destacadas</p>
+                <h2 class="mt-2 text-3xl font-black text-text">Basadas en la cantidad de ventas</h2>
             </div>
-            <a class="hidden sm:inline-flex text-sm font-bold text-secondary hover:underline" href="{% url 'catalogo' %}">Explorar más</a>
+            <a class="hidden sm:inline-flex items-center justify-center rounded-full bg-secondary px-6 py-2 text-sm font-bold text-white shadow-md shadow-secondary/30 transition hover:-translate-y-0.5 hover:bg-secondary/90 hover:shadow-lg" href="{% url 'catalogo' %}">Explorar más</a>
         </div>
         <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {% for tienda in tiendas_destacadas %}
@@ -257,7 +257,7 @@
                 <p class="text-sm font-bold uppercase tracking-[0.2em] text-accent">Productos</p>
                 <h2 class="mt-2 text-3xl font-black text-text">Vitrinas destacadas de las tiendas</h2>
             </div>
-            <a class="hidden sm:inline-flex text-sm font-bold text-accent hover:underline" href="{% url 'catalogo' %}">Ir al catálogo completo</a>
+            <a class="hidden sm:inline-flex items-center justify-center rounded-full bg-slate-800 px-6 py-2 text-sm font-bold text-white shadow-md shadow-slate-800/30 transition hover:-translate-y-0.5 hover:bg-slate-900 hover:shadow-lg" href="{% url 'catalogo' %}">Ir al catálogo completo</a>
         </div>
         <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {% for prod in productos_destacados %}
