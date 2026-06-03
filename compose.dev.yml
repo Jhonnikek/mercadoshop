@@ -15,15 +15,15 @@ services:
       - db
 
   db:
-    image: postgres:15-alpine
+    image: mysql:8.0
     container_name: db_dev
     restart: "unless-stopped"
     env_file:
       - .env
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - pgdata_dev:/var/lib/postgresql/data
+      - mysql_data_dev:/var/lib/mysql
 
 volumes:
-  pgdata_dev:
+  mysql_data_dev:
