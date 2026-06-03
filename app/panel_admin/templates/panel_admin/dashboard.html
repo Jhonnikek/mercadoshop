@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Dashboard - Panel Admin</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    {% include "includes/tailwind_config.html" %}
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- SideNavBar -->
+{% include 'includes/sidebar.html' %}
+
+<!-- Main Content Area -->
+<main class="flex-1 ml-0 md:ml-64 p-margin-mobile md:p-margin-desktop bg-surface-container-lowest min-h-screen">
+    <header class="mb-8 hidden md:flex justify-between items-end">
+        <div>
+            <h2 class="text-headline-lg font-black text-on-surface mb-1">Panel de Control Global</h2>
+            <p class="text-body-md text-on-surface-variant">Monitoreo general del sistema</p>
+        </div>
+    </header>
+
+    <!-- Bento Grid Layout -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-gutter max-w-container-max mx-auto">
+        <!-- Metric Cards -->
+        <div class="col-span-1 md:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-gutter mb-gutter">
+            
+            <!-- Metric 1: Tiendas -->
+            <div class="glass-card rounded-xl p-6 shadow-sm border border-outline-variant/50 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span class="material-symbols-outlined text-6xl text-primary">storefront</span>
+                </div>
+                <p class="text-label-md text-on-surface-variant mb-2">Total Tiendas</p>
+                <h3 class="text-headline-xl text-on-surface mb-4">{{ total_tiendas }}</h3>
+                <div class="flex items-center gap-2 text-label-sm">
+                    <span class="text-secondary bg-secondary-container px-2 py-0.5 rounded">Registradas</span>
+                </div>
+            </div>
+            
+            <!-- Metric 2: Productos -->
+            <div class="glass-card rounded-xl p-6 shadow-sm border border-outline-variant/50 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span class="material-symbols-outlined text-6xl text-primary">inventory_2</span>
+                </div>
+                <p class="text-label-md text-on-surface-variant mb-2">Total Productos</p>
+                <h3 class="text-headline-xl text-on-surface mb-4">{{ total_productos }}</h3>
+                <div class="flex items-center gap-2 text-label-sm">
+                    <span class="text-secondary bg-secondary-container px-2 py-0.5 rounded">En catálogo global</span>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</main>
+</body>
+</html>

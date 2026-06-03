@@ -1,0 +1,23 @@
+{% extends 'panel_admin/base.html' %}
+
+{% block title %}Editar Tienda - {{ tienda.nombre }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 0 auto;">
+    <h2>Editar Tienda: {{ tienda.nombre }}</h2>
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+        </div>
+        {% endfor %}
+        
+        <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+            <button type="submit" class="btn">Actualizar</button>
+            <a href="{% url 'gestionar_tiendas' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

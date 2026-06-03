@@ -1,0 +1,21 @@
+{% extends 'panel_admin/base.html' %}
+
+{% block title %}Eliminar Tienda{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 0 auto; text-align: center;">
+    <h2 style="color: #dc3545;">¿Eliminar Tienda?</h2>
+    <p style="margin-bottom: 2rem; color: #555;">
+        Estás a punto de eliminar la tienda <strong>"{{ tienda.nombre }}"</strong>.<br>
+        Esta acción no se puede deshacer. ¿Estás seguro?
+    </p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+            <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+            <a href="{% url 'gestionar_tiendas' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

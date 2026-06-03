@@ -1,0 +1,49 @@
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+    .sidebar-container {
+        font-family: 'Inter', sans-serif !important;
+    }
+</style>
+<aside class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 py-6 border-r border-outline-variant bg-on-surface text-on-surface shadow-lg z-50 overflow-y-auto sidebar-container">
+    <!-- Header -->
+    <div class="px-6 mb-8 flex items-center gap-4">
+        <div class="w-10 h-10 shrink-0 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-label-md">
+            MS
+        </div>
+        <div class="min-w-0">
+            <h1 class="text-headline-sm font-black text-primary-fixed truncate leading-tight">
+                Panel Admin
+            </h1>
+            <p class="text-label-sm font-medium text-surface-variant truncate mt-0.5">
+                Administrador
+            </p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 flex flex-col gap-1 px-2">
+        {% with url_name=request.resolver_match.url_name %}
+            <a class="{% if url_name == 'dashboard' %}bg-primary-container text-on-primary-container translate-x-1{% else %}text-surface-variant hover:bg-primary/10{% endif %} rounded-lg mx-2 my-1 flex items-center gap-3 p-3 text-label-md font-label-md transition-all" href="{% url 'dashboard' %}">
+                <span class="material-symbols-outlined text-[22px]" {% if url_name == 'dashboard' %}style="font-variation-settings: 'FILL' 1;"{% endif %}>dashboard</span>
+                Dashboard
+            </a>
+            <a class="{% if 'tiendas' in request.path %}bg-primary-container text-on-primary-container translate-x-1{% else %}text-surface-variant hover:bg-primary/10{% endif %} rounded-lg mx-2 my-1 flex items-center gap-3 p-3 text-label-md font-label-md transition-all" href="{% url 'gestionar_tiendas' %}">
+                <span class="material-symbols-outlined text-[22px]" {% if 'tiendas' in request.path %}style="font-variation-settings: 'FILL' 1;"{% endif %}>storefront</span>
+                Gestionar Tiendas
+            </a>
+        {% endwith %}
+    </nav>
+
+    <!-- Footer -->
+    <div class="px-6 mt-auto flex flex-col gap-4">
+        <div class="border-t border-outline-variant/50 pt-4 flex flex-col gap-2">
+            <form action="{% url 'logout' %}" method="post" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="w-full text-error hover:bg-error/10 flex items-center gap-3 p-2 text-label-md font-label-md transition-colors rounded-lg text-left">
+                    <span class="material-symbols-outlined text-[20px]">logout</span>
+                    Cerrar Sesión
+                </button>
+            </form>
+        </div>
+    </div>
+</aside>

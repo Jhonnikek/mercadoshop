@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Gestión de Tiendas - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    {% include "includes/tailwind_config.html" %}
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #faf8ff; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        /* Modal simple para creación/edición */
+        #crudModal {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased flex h-screen overflow-hidden">
+    <!-- SideNavBar -->
+    {% include 'includes/sidebar.html' %}
+
+    <!-- Main Content Area -->
+    <main class="flex-1 ml-0 md:ml-64 bg-background h-screen overflow-y-auto">
+        <!-- Top Bar -->
+        <header class="bg-surface-container-lowest border-b border-outline-variant/50 sticky top-0 z-40">
+            <div class="px-margin-desktop py-4 flex items-center justify-between max-w-container-max mx-auto">
+                <h2 class="text-headline-md font-headline-md text-on-surface">Administración de Tiendas</h2>
+                <button onclick="openModal('create')" class="bg-primary text-on-primary px-4 py-2 rounded-lg text-label-md font-semibold hover:opacity-95 transition-all flex items-center gap-2 shadow-sm">
+                    <span class="material-symbols-outlined text-[18px]">add</span>
+                    Añadir Tienda
+                </button>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="p-margin-desktop max-w-container-max mx-auto space-y-gutter">
+            <!-- Data Table Card -->
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden bg-white">
+                <div class="overflow-x-auto">
+                    {% csrf_token %}
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-outline-variant/50 bg-[#F8FAFC] text-on-surface-variant text-label-sm font-label-sm uppercase tracking-wider">
+                                <th class="p-4 font-semibold">Tienda (ID)</th>
+                                <th class="p-4 font-semibold">Nombre</th>
+                                <th class="p-4 font-semibold">Dirección</th>
+                                <th class="p-4 font-semibold text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tiendas-tbody" class="text-body-sm font-body-sm text-on-surface divide-y divide-outline-variant/30">
+                            {% for tienda in tiendas %}
+                            <tr id="tienda-row-{{ tienda.id }}" class="hover:bg-surface-container-low/50 transition-colors group">
+                                <td class="p-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-lg bg-[#E2E8F0] overflow-hidden flex-shrink-0 flex items-center justify-center font-bold text-primary">
+                                            {{ tienda.nombre|slice:":2"|upper }}
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold text-on-surface">ST-{{ tienda.id }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="p-4 font-medium t-nombre">
+                                    {{ tienda.nombre }}
+                                </td>
+                                <td class="p-4 text-on-surface-variant t-direccion">
+                                    {{ tienda.direccion }}
+                                </td>
+                                <td class="p-4 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button onclick="openModal('edit', {{ tienda.id }}, '{{ tienda.nombre|escapejs }}', '{{ tienda.direccion|escapejs }}')" class="px-2.5 py-1 bg-surface-container-high hover:bg-primary/10 hover:text-primary rounded-md text-label-sm font-semibold transition-all edit-btn">
+                                            Editar
+                                        </button>
+                                        <button onclick="deleteTienda({{ tienda.id }})" class="px-2.5 py-1 bg-error/10 text-error hover:bg-error hover:text-on-error rounded-md text-label-sm font-semibold transition-all">
+                                            Eliminar
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr id="empty-row">
+                                <td colspan="4" class="p-8 text-center text-on-surface-variant">
+                                    No hay tiendas registradas en el sistema.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal CRUD (Tailwind) -->
+    <div id="crudModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center">
+                <h3 id="modalTitle" class="text-headline-sm font-bold">Nueva Tienda</h3>
+                <button onclick="closeModal()" class="text-surface-variant hover:text-on-surface">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form id="crudForm" class="p-6">
+                <input type="hidden" id="tienda-id">
+                <input type="hidden" id="action-type" value="create">
+                <div class="mb-4">
+                    <label class="block text-label-md font-medium text-on-surface mb-1">Nombre</label>
+                    <input type="text" id="tienda-nombre" required class="w-full border-outline-variant rounded-lg p-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-label-md font-medium text-on-surface mb-1">Dirección</label>
+                    <input type="text" id="tienda-direccion" required class="w-full border-outline-variant rounded-lg p-2 focus:ring-primary focus:border-primary">
+                </div>
+                
+                <hr class="my-4 border-outline-variant/50">
+                <p class="text-label-sm font-semibold text-primary mb-3" id="credenciales-title">Credenciales del Vendedor</p>
+                
+                <div class="mb-4" id="div-username">
+                    <label class="block text-label-md font-medium text-on-surface mb-1">Usuario (Vendedor)</label>
+                    <input type="text" id="tienda-username" class="w-full border-outline-variant rounded-lg p-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div class="mb-6" id="div-password">
+                    <label class="block text-label-md font-medium text-on-surface mb-1">Contraseña</label>
+                    <input type="password" id="tienda-password" class="w-full border-outline-variant rounded-lg p-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div class="flex gap-3 justify-end">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-surface-container-high rounded-lg text-label-md font-semibold">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-on-primary rounded-lg text-label-md font-semibold shadow-sm">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const modal = document.getElementById('crudModal');
+        const form = document.getElementById('crudForm');
+
+        function openModal(action, id='', nombre='', direccion='') {
+            document.getElementById('action-type').value = action;
+            document.getElementById('tienda-id').value = id;
+            document.getElementById('tienda-nombre').value = nombre;
+            document.getElementById('tienda-direccion').value = direccion;
+            document.getElementById('modalTitle').innerText = action === 'create' ? 'Nueva Tienda' : 'Editar Tienda';
+            
+            // Ocultar campos de usuario si es edición
+            const displayCreds = action === 'create' ? 'block' : 'none';
+            document.getElementById('div-username').style.display = displayCreds;
+            document.getElementById('div-password').style.display = displayCreds;
+            document.getElementById('credenciales-title').style.display = displayCreds;
+            document.getElementById('tienda-username').required = (action === 'create');
+            document.getElementById('tienda-password').required = (action === 'create');
+            document.getElementById('tienda-username').value = '';
+            document.getElementById('tienda-password').value = '';
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            const action = document.getElementById('action-type').value;
+            const id = document.getElementById('tienda-id').value;
+            const nombre = document.getElementById('tienda-nombre').value;
+            const direccion = document.getElementById('tienda-direccion').value;
+            const username = document.getElementById('tienda-username').value;
+            const password = document.getElementById('tienda-password').value;
+            
+            const data = new FormData();
+            data.append('nombre', nombre);
+            data.append('direccion', direccion);
+            if (action === 'create') {
+                data.append('username', username);
+                data.append('password', password);
+            }
+            
+            const url = action === 'create' ? "{% url 'crear_tienda_ajax' %}" : `/panel/tiendas/${id}/editar/`;
+            
+            fetch(url, {
+                method: "POST",
+                headers: { "X-CSRFToken": csrfToken },
+                body: data
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.status === 'success') {
+                    if (action === 'create') {
+                        // Remove empty row if exists
+                        const emptyRow = document.getElementById('empty-row');
+                        if (emptyRow) emptyRow.remove();
+                        
+                        const newRow = `
+                        <tr id="tienda-row-${res.id}" class="hover:bg-surface-container-low/50 transition-colors group">
+                            <td class="p-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-[#E2E8F0] overflow-hidden flex-shrink-0 flex items-center justify-center font-bold text-primary">
+                                        ${res.nombre.substring(0,2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-on-surface">ST-${res.id}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="p-4 font-medium t-nombre">${res.nombre}</td>
+                            <td class="p-4 text-on-surface-variant t-direccion">${res.direccion}</td>
+                            <td class="p-4 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <button onclick="openModal('edit', ${res.id}, '${res.nombre.replace(/'/g, "\\'")}', '${res.direccion.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-surface-container-high hover:bg-primary/10 hover:text-primary rounded-md text-label-sm font-semibold transition-all edit-btn">Editar</button>
+                                    <button onclick="deleteTienda(${res.id})" class="px-2.5 py-1 bg-error/10 text-error hover:bg-error hover:text-on-error rounded-md text-label-sm font-semibold transition-all">Eliminar</button>
+                                </div>
+                            </td>
+                        </tr>`;
+                        document.getElementById('tiendas-tbody').insertAdjacentHTML('afterbegin', newRow);
+                    } else {
+                        const row = document.getElementById(`tienda-row-${res.id}`);
+                        row.querySelector('.t-nombre').innerText = res.nombre;
+                        row.querySelector('.t-direccion').innerText = res.direccion;
+                        const avatar = row.querySelector('.bg-\\[\\#E2E8F0\\]');
+                        if(avatar) avatar.innerText = res.nombre.substring(0,2).toUpperCase();
+                        
+                        const btn = row.querySelector('.edit-btn');
+                        btn.setAttribute('onclick', `openModal('edit', ${res.id}, '${res.nombre.replace(/'/g, "\\'")}', '${res.direccion.replace(/'/g, "\\'")}')`);
+                    }
+                    closeModal();
+                } else {
+                    alert(res.message || 'Ocurrió un error');
+                }
+            });
+        };
+
+        function deleteTienda(id) {
+            if (!confirm('¿Seguro que deseas eliminar esta tienda permanentemente?')) return;
+            
+            fetch(`/panel/tiendas/${id}/eliminar/`, {
+                method: "POST",
+                headers: { "X-CSRFToken": csrfToken }
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.status === 'success') {
+                    document.getElementById(`tienda-row-${id}`).remove();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
