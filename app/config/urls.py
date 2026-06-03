@@ -37,7 +37,10 @@ from core.views import (
     actualizar_item_carrito_view, realizar_pedido_view, pedido_exitoso_view,
     admin_usuario_crear_view, admin_usuario_editar_view, admin_usuario_eliminar_view,
     admin_tienda_crear_view, admin_tienda_editar_view, admin_tienda_eliminar_view,
-    admin_pedidos_view, admin_pedido_crear_view, admin_pedido_editar_view, admin_pedido_eliminar_view
+    admin_pedidos_view, admin_pedido_crear_view, admin_pedido_editar_view, admin_pedido_eliminar_view,
+    EstadoPedidoViewSet, RolViewSet, CategoriaViewSet, DireccionClienteViewSet,
+    CarritoViewSet, ItemCarritoViewSet, TrabajadorTiendaViewSet,
+    TransaccionPasarelaViewSet, TiendaAdminViewSet
 )
 
 # Inicializar router de DRF
@@ -49,6 +52,16 @@ router.register(r'usuarios', UsuarioViewSet, basename='usuario')
 router.register(r'departamentos', DepartamentoViewSet, basename='departamento')
 router.register(r'municipios', MunicipioViewSet, basename='municipio')
 router.register(r'direcciones', DireccionViewSet, basename='direccion')
+router.register(r'estados-pedido', EstadoPedidoViewSet, basename='estadopedido')
+router.register(r'roles', RolViewSet, basename='rol')
+router.register(r'categorias', CategoriaViewSet, basename='categoria')
+router.register(r'direcciones-cliente', DireccionClienteViewSet, basename='direccioncliente')
+router.register(r'carritos', CarritoViewSet, basename='carrito')
+router.register(r'items-carrito', ItemCarritoViewSet, basename='itemcarrito')
+router.register(r'trabajadores-tienda', TrabajadorTiendaViewSet, basename='trabajadortienda')
+router.register(r'transacciones', TransaccionPasarelaViewSet, basename='transaccion')
+router.register(r'tiendas-admin', TiendaAdminViewSet, basename='tiendaadmin')
+
 
 urlpatterns = [
     # Página de inicio del Marketplace

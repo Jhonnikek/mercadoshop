@@ -1,5 +1,10 @@
 from rest_framework import serializers
-from .models import Tienda, Producto, Pedido, DetallePedido, Usuario, Direccion, Municipio, Departamento, Categoria
+from .models import (
+    Tienda, Producto, Pedido, DetallePedido, Usuario, Direccion, 
+    Municipio, Departamento, Categoria, EstadoPedido, Rol, 
+    DireccionCliente, Carrito, ItemCarrito, TrabajadorTienda, 
+    TransaccionPasarela, TiendaAdmin
+)
 
 class DepartamentoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -110,3 +115,51 @@ class PedidoSerializer(serializers.ModelSerializer):
             DetallePedido.objects.create(pedido=pedido, **item)
 
         return pedido
+
+class EstadoPedidoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EstadoPedido
+        fields = '__all__'
+
+class RolSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rol
+        fields = '__all__'
+
+class CategoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Categoria
+        fields = '__all__'
+
+class DireccionClienteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DireccionCliente
+        fields = '__all__'
+
+class ItemCarritoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ItemCarrito
+        fields = '__all__'
+
+class CarritoSerializer(serializers.ModelSerializer):
+    items = ItemCarritoSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Carrito
+        fields = '__all__'
+
+class TrabajadorTiendaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TrabajadorTienda
+        fields = '__all__'
+
+class TransaccionPasarelaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TransaccionPasarela
+        fields = '__all__'
+
+class TiendaAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TiendaAdmin
+        fields = '__all__'
+
