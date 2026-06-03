@@ -1,12 +1,12 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from .models import Tienda
 from tiendas.models import Producto
 
-@login_required(login_url='login')
+@staff_member_required(login_url='login')
 def dashboard(request):
     total_tiendas = Tienda.objects.count()
     total_productos = Producto.objects.count()
@@ -15,14 +15,14 @@ def dashboard(request):
         'total_productos': total_productos,
     })
 
-@login_required(login_url='login')
+@staff_member_required(login_url='login')
 def gestionarTiendas(request):
     tiendas = Tienda.objects.all().order_by('-id')
     return render(request, 'panel_admin/gestionar_tiendas.html', {
         'tiendas': tiendas,
     })
 
-@login_required(login_url='login')
+@staff_member_required(login_url='login')
 @require_POST
 def crearTiendaAjax(request):
     nombre = request.POST.get('nombre')
@@ -39,7 +39,7 @@ def crearTiendaAjax(request):
         return JsonResponse({'status': 'success', 'id': tienda.id, 'nombre': tienda.nombre, 'direccion': tienda.direccion})
     return JsonResponse({'status': 'error', 'message': 'Faltan campos requeridos'}, status=400)
 
-@login_required(login_url='login')
+@staff_member_required(login_url='login')
 @require_POST
 def editarTiendaAjax(request, id):
     tienda = get_object_or_404(Tienda, id=id)
@@ -50,7 +50,7 @@ def editarTiendaAjax(request, id):
         return JsonResponse({'status': 'success', 'id': tienda.id, 'nombre': tienda.nombre, 'direccion': tienda.direccion})
     return JsonResponse({'status': 'error'}, status=400)
 
-@login_required(login_url='login')
+@staff_member_required(login_url='login')
 @require_POST
 def eliminarTiendaAjax(request, id):
     tienda = get_object_or_404(Tienda, id=id)
