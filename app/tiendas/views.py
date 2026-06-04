@@ -1,4 +1,4 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
@@ -6,24 +6,26 @@ from .models import Producto
 from .serializers import ProductoSerializer
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def crearProducto(request):
+class CrearProductoView(generics.CreateAPIView):
     """
     API REST para crear un producto.
     Consumida por la app de escritorio (Flutter Desktop).
-
-    Recibe JSON: {"nombre": "Zapatos", "precio": 100, "stock": 50, "tienda": 1}
-    Responde JSON: {"status": "success", "producto": {...}}
     """
-    serializer = ProductoSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
+    queryset = Producto.objects.all()
+    serializer_class = ProductoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                {'status': 'success', 'producto': serializer.data},
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
         return Response(
-            {'status': 'success', 'producto': serializer.data},
-            status=status.HTTP_201_CREATED,
+            {'status': 'error', 'errors': serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
         )
-    return Response(
-        {'status': 'error', 'errors': serializer.errors},
-        status=status.HTTP_400_BAD_REQUEST,
-    )
