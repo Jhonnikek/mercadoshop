@@ -47,6 +47,7 @@
                                 <th class="p-4 font-semibold">Tienda (ID)</th>
                                 <th class="p-4 font-semibold">Nombre</th>
                                 <th class="p-4 font-semibold">Dirección</th>
+                                <th class="p-4 font-semibold">Estado</th>
                                 <th class="p-4 font-semibold text-right">Acciones</th>
                             </tr>
                         </thead>
@@ -69,12 +70,19 @@
                                 <td class="p-4 text-on-surface-variant t-direccion">
                                     {{ tienda.direccion }}
                                 </td>
+                                <td class="p-4 t-estado">
+                                    {% if tienda.activo %}
+                                    <span class="px-2 py-1 bg-primary/10 text-primary rounded-full text-label-sm font-semibold">Activo</span>
+                                    {% else %}
+                                    <span class="px-2 py-1 bg-error/10 text-error rounded-full text-label-sm font-semibold">Inactivo</span>
+                                    {% endif %}
+                                </td>
                                 <td class="p-4 text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         <button onclick="openDetailModal({{ tienda.id }})" class="px-2.5 py-1 bg-secondary/10 text-secondary hover:bg-secondary hover:text-white rounded-md text-label-sm font-semibold transition-all">
                                             Detalles
                                         </button>
-                                        <button onclick="openModal('edit', {{ tienda.id }}, '{{ tienda.nombre|escapejs }}', '{{ tienda.direccion|escapejs }}')" class="px-2.5 py-1 bg-surface-container-high hover:bg-primary/10 hover:text-primary rounded-md text-label-sm font-semibold transition-all edit-btn">
+                                        <button onclick="openModal('edit', {{ tienda.id }}, '{{ tienda.nombre|escapejs }}', '{{ tienda.direccion|escapejs }}', '{{ tienda.usuario.username|escapejs }}', '{{ tienda.activo|yesno:"true,false" }}')" class="px-2.5 py-1 bg-surface-container-high hover:bg-primary/10 hover:text-primary rounded-md text-label-sm font-semibold transition-all edit-btn">
                                             Editar
                                         </button>
                                         <button onclick="deleteTienda({{ tienda.id }})" class="px-2.5 py-1 bg-error/10 text-error hover:bg-error hover:text-on-error rounded-md text-label-sm font-semibold transition-all">
@@ -127,6 +135,10 @@
                     <p class="text-label-sm text-on-surface-variant font-semibold">Fecha de Creación</p>
                     <p id="det-fecha" class="text-body-md text-on-surface"></p>
                 </div>
+                <div>
+                    <p class="text-label-sm text-on-surface-variant font-semibold">Estado</p>
+                    <p id="det-estado" class="text-body-md text-on-surface font-medium"></p>
+                </div>
                 <div class="flex justify-end pt-4">
                     <button onclick="closeDetailModal()" class="px-4 py-2 bg-surface-container-high rounded-lg text-label-md font-semibold">Cerrar</button>
                 </div>
@@ -153,6 +165,10 @@
                 <div class="mb-4">
                     <label class="block text-label-md font-medium text-on-surface mb-1">Dirección</label>
                     <input type="text" id="tienda-direccion" required class="w-full border-outline-variant rounded-lg p-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div class="mb-4 flex items-center gap-2">
+                    <input type="checkbox" id="tienda-activo" class="rounded border-outline-variant text-primary focus:ring-primary" checked>
+                    <label for="tienda-activo" class="text-label-md font-medium text-on-surface cursor-pointer">Tienda Activa</label>
                 </div>
                 
                 <hr class="my-4 border-outline-variant/50">
@@ -181,30 +197,33 @@
         const detailModal = document.getElementById('detailModal');
         const form = document.getElementById('crudForm');
 
-        function openModal(action, id='', nombre='', direccion='') {
+        function openModal(action, id='', nombre='', direccion='', username='', activo='true') {
             document.getElementById('action-type').value = action;
             document.getElementById('tienda-id').value = id;
             document.getElementById('tienda-nombre').value = nombre;
             document.getElementById('tienda-direccion').value = direccion;
+            document.getElementById('tienda-username').value = username;
+            document.getElementById('tienda-activo').checked = (activo === 'true' || activo === true);
             document.getElementById('modalTitle').innerText = action === 'create' ? 'Nueva Tienda' : 'Editar Tienda';
             
             // Mostrar u ocultar campo de usuario dependiendo si es crear o editar
-            // El usuario solo se crea, no se edita. La contraseña sí se puede cambiar.
+            // Ahora mostramos username en ambos casos, pero en create es obligatorio
+            document.getElementById('div-username').style.display = 'block';
+            
             if(action === 'create') {
-                document.getElementById('div-username').style.display = 'block';
                 document.getElementById('tienda-username').required = true;
                 document.getElementById('tienda-password').required = true;
                 document.getElementById('label-password').innerText = "Contraseña";
                 document.getElementById('help-password').style.display = 'none';
+                document.getElementById('tienda-username').value = '';
+                document.getElementById('tienda-password').value = '';
             } else {
-                document.getElementById('div-username').style.display = 'none';
-                document.getElementById('tienda-username').required = false;
+                document.getElementById('tienda-username').required = true;
                 document.getElementById('tienda-password').required = false;
                 document.getElementById('label-password').innerText = "Nueva Contraseña";
                 document.getElementById('help-password').style.display = 'block';
+                document.getElementById('tienda-password').value = '';
             }
-            document.getElementById('tienda-username').value = '';
-            document.getElementById('tienda-password').value = '';
             
             modal.style.display = 'flex';
         }
@@ -223,6 +242,8 @@
                     document.getElementById('det-direccion').innerText = res.tienda.direccion;
                     document.getElementById('det-username').innerText = res.tienda.username;
                     document.getElementById('det-fecha').innerText = res.tienda.fecha_creacion;
+                    document.getElementById('det-estado').innerText = res.tienda.activo ? 'Activa' : 'Inactiva';
+                    document.getElementById('det-estado').className = res.tienda.activo ? 'text-body-md text-primary font-medium' : 'text-body-md text-error font-medium';
                     detailModal.style.display = 'flex';
                 } else {
                     alert('Error al cargar detalles');
@@ -242,14 +263,17 @@
             const direccion = document.getElementById('tienda-direccion').value;
             const username = document.getElementById('tienda-username').value;
             const password = document.getElementById('tienda-password').value;
+            const activo = document.getElementById('tienda-activo').checked;
             
             const data = new FormData();
             data.append('nombre', nombre);
             data.append('direccion', direccion);
+            data.append('activo', activo);
             if (action === 'create') {
                 data.append('username', username);
                 data.append('password', password);
             } else {
+                if (username.trim() !== '') data.append('username', username);
                 // Si es edit, enviamos la password solo si se llenó
                 if (password.trim() !== '') {
                     data.append('password', password);
@@ -285,10 +309,16 @@
                             </td>
                             <td class="p-4 font-medium t-nombre">${res.nombre}</td>
                             <td class="p-4 text-on-surface-variant t-direccion">${res.direccion}</td>
+                            <td class="p-4 t-estado">
+                                ${res.activo 
+                                    ? '<span class="px-2 py-1 bg-primary/10 text-primary rounded-full text-label-sm font-semibold">Activo</span>'
+                                    : '<span class="px-2 py-1 bg-error/10 text-error rounded-full text-label-sm font-semibold">Inactivo</span>'
+                                }
+                            </td>
                             <td class="p-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <button onclick="openDetailModal(${res.id})" class="px-2.5 py-1 bg-secondary/10 text-secondary hover:bg-secondary hover:text-white rounded-md text-label-sm font-semibold transition-all">Detalles</button>
-                                    <button onclick="openModal('edit', ${res.id}, '${res.nombre.replace(/'/g, "\\'")}', '${res.direccion.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-surface-container-high hover:bg-primary/10 hover:text-primary rounded-md text-label-sm font-semibold transition-all edit-btn">Editar</button>
+                                    <button onclick="openModal('edit', ${res.id}, '${res.nombre.replace(/'/g, "\\'")}', '${res.direccion.replace(/'/g, "\\'")}', '${res.username.replace(/'/g, "\\'")}', '${res.activo}')" class="px-2.5 py-1 bg-surface-container-high hover:bg-primary/10 hover:text-primary rounded-md text-label-sm font-semibold transition-all edit-btn">Editar</button>
                                     <button onclick="deleteTienda(${res.id})" class="px-2.5 py-1 bg-error/10 text-error hover:bg-error hover:text-on-error rounded-md text-label-sm font-semibold transition-all">Eliminar</button>
                                 </div>
                             </td>
@@ -298,11 +328,15 @@
                         const row = document.getElementById(`tienda-row-${res.id}`);
                         row.querySelector('.t-nombre').innerText = res.nombre;
                         row.querySelector('.t-direccion').innerText = res.direccion;
+                        row.querySelector('.t-estado').innerHTML = res.activo 
+                            ? '<span class="px-2 py-1 bg-primary/10 text-primary rounded-full text-label-sm font-semibold">Activo</span>'
+                            : '<span class="px-2 py-1 bg-error/10 text-error rounded-full text-label-sm font-semibold">Inactivo</span>';
+                            
                         const avatar = row.querySelector('.bg-\\[\\#E2E8F0\\]');
                         if(avatar) avatar.innerText = res.nombre.substring(0,2).toUpperCase();
                         
                         const btn = row.querySelector('.edit-btn');
-                        btn.setAttribute('onclick', `openModal('edit', ${res.id}, '${res.nombre.replace(/'/g, "\\'")}', '${res.direccion.replace(/'/g, "\\'")}')`);
+                        btn.setAttribute('onclick', `openModal('edit', ${res.id}, '${res.nombre.replace(/'/g, "\\'")}', '${res.direccion.replace(/'/g, "\\'")}', '${res.username.replace(/'/g, "\\'")}', '${res.activo}')`);
                     }
                     closeModal();
                 } else {
