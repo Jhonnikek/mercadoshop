@@ -15,6 +15,17 @@
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
+        .card-clickable {
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .card-clickable:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 74, 198, 0.12);
+        }
+        .card-clickable:active {
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen flex">
@@ -26,41 +37,278 @@
     <header class="mb-8 hidden md:flex justify-between items-end">
         <div>
             <h2 class="text-headline-lg font-black text-on-surface mb-1">Panel de Control Global</h2>
-            <p class="text-body-md text-on-surface-variant">Monitoreo general del sistema</p>
+            <p class="text-body-md text-on-surface-variant">Monitoreo general del marketplace</p>
         </div>
     </header>
 
-    <!-- Bento Grid Layout -->
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-gutter max-w-container-max mx-auto">
-        <!-- Metric Cards -->
-        <div class="col-span-1 md:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-gutter mb-gutter">
-            
-            <!-- Metric 1: Tiendas -->
-            <div class="glass-card rounded-xl p-6 shadow-sm border border-outline-variant/50 relative overflow-hidden group">
-                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <span class="material-symbols-outlined text-6xl text-primary">storefront</span>
-                </div>
-                <p class="text-label-md text-on-surface-variant mb-2">Total Tiendas</p>
-                <h3 class="text-headline-xl text-on-surface mb-4">{{ total_tiendas }}</h3>
-                <div class="flex items-center gap-2 text-label-sm">
-                    <span class="text-secondary bg-secondary-container px-2 py-0.5 rounded">Registradas</span>
-                </div>
+    <!-- Metric Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter max-w-container-max mx-auto">
+        
+        <!-- Metric 1: Total Tiendas — clickable -->
+        <div onclick="openTiendasPopup()" class="glass-card card-clickable rounded-xl p-6 shadow-sm border border-outline-variant/50 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <span class="material-symbols-outlined text-6xl text-primary">storefront</span>
             </div>
-            
-            <!-- Metric 2: Productos -->
-            <div class="glass-card rounded-xl p-6 shadow-sm border border-outline-variant/50 relative overflow-hidden group">
-                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <span class="material-symbols-outlined text-6xl text-primary">inventory_2</span>
-                </div>
-                <p class="text-label-md text-on-surface-variant mb-2">Total Productos</p>
-                <h3 class="text-headline-xl text-on-surface mb-4">{{ total_productos }}</h3>
-                <div class="flex items-center gap-2 text-label-sm">
-                    <span class="text-secondary bg-secondary-container px-2 py-0.5 rounded">En catálogo global</span>
-                </div>
+            <p class="text-label-md text-on-surface-variant mb-2">Total Tiendas</p>
+            <h3 class="text-headline-xl text-on-surface mb-4">{{ total_tiendas }}</h3>
+            <div class="flex items-center justify-between text-label-sm">
+                <span class="text-secondary bg-secondary-container px-2 py-0.5 rounded">Registradas</span>
+                <span class="text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Ver detalle
+                    <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                </span>
             </div>
-            
         </div>
+        
+        <!-- Metric 2: Tiendas Activas -->
+        <div class="glass-card rounded-xl p-6 shadow-sm border border-outline-variant/50 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <span class="material-symbols-outlined text-6xl text-primary">check_circle</span>
+            </div>
+            <p class="text-label-md text-on-surface-variant mb-2">Tiendas Activas</p>
+            <h3 class="text-headline-xl text-on-surface mb-4">{{ tiendas_activas }}</h3>
+            <div class="flex items-center gap-2 text-label-sm">
+                <span class="text-secondary bg-secondary-container px-2 py-0.5 rounded">En operación</span>
+            </div>
+        </div>
+        
+        <!-- Metric 3: Total Productos — clickable -->
+        <div onclick="openProductosPopup()" class="glass-card card-clickable rounded-xl p-6 shadow-sm border border-outline-variant/50 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <span class="material-symbols-outlined text-6xl text-primary">inventory_2</span>
+            </div>
+            <p class="text-label-md text-on-surface-variant mb-2">Total Productos</p>
+            <h3 class="text-headline-xl text-on-surface mb-4">{{ total_productos }}</h3>
+            <div class="flex items-center justify-between text-label-sm">
+                <span class="text-secondary bg-secondary-container px-2 py-0.5 rounded">En catálogo global</span>
+                <span class="text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Ver detalle
+                    <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                </span>
+            </div>
+        </div>
+        
     </div>
 </main>
+
+<!-- Modal: Popup de Tiendas -->
+<div id="tiendasPopup" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" style="display:none;">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-4 overflow-hidden max-h-[85vh] flex flex-col">
+        <div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center shrink-0">
+            <div>
+                <h3 class="text-headline-sm font-bold text-on-surface">Todas las Tiendas</h3>
+                <p class="text-body-sm text-on-surface-variant mt-0.5">Resumen de tiendas registradas en el marketplace</p>
+            </div>
+            <button onclick="closeTiendasPopup()" class="text-surface-variant hover:text-on-surface p-1 rounded-lg hover:bg-surface-container-high transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="overflow-y-auto flex-1">
+            <div id="tiendasPopupLoading" class="p-8 text-center text-on-surface-variant">
+                <span class="material-symbols-outlined text-4xl animate-spin">progress_activity</span>
+                <p class="mt-2 text-body-sm">Cargando tiendas...</p>
+            </div>
+            <table id="tiendasPopupTable" class="w-full text-left border-collapse" style="display:none;">
+                <thead class="sticky top-0 z-10">
+                    <tr class="bg-[#F8FAFC] text-label-sm text-outline border-b border-outline-variant/30 uppercase tracking-wider">
+                        <th class="py-3 px-4 font-semibold">Tienda</th>
+                        <th class="py-3 px-4 font-semibold">Vendedor</th>
+                        <th class="py-3 px-4 font-semibold text-center">Productos</th>
+                        <th class="py-3 px-4 font-semibold text-center">Stock</th>
+                        <th class="py-3 px-4 font-semibold text-center">Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tiendasPopupBody" class="text-body-sm text-on-surface divide-y divide-outline-variant/20"></tbody>
+            </table>
+            <div id="tiendasPopupEmpty" class="p-8 text-center text-on-surface-variant" style="display:none;">
+                No hay tiendas registradas.
+            </div>
+        </div>
+        <div class="px-6 py-3 border-t border-outline-variant/30 flex justify-between items-center shrink-0 bg-[#FAFBFC]">
+            <a href="{% url 'gestionar_tiendas' %}" class="text-primary text-label-md font-semibold hover:underline flex items-center gap-1">
+                Ir a Gestión de Tiendas
+                <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+            </a>
+            <button onclick="closeTiendasPopup()" class="px-4 py-2 bg-surface-container-high rounded-lg text-label-md font-semibold hover:bg-surface-container-highest transition-colors">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Popup de Productos -->
+<div id="productosPopup" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" style="display:none;">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden max-h-[85vh] flex flex-col">
+        <div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center shrink-0">
+            <div>
+                <h3 class="text-headline-sm font-bold text-on-surface">Todos los Productos</h3>
+                <p class="text-body-sm text-on-surface-variant mt-0.5">Catálogo global del marketplace</p>
+            </div>
+            <button onclick="closeProductosPopup()" class="text-surface-variant hover:text-on-surface p-1 rounded-lg hover:bg-surface-container-high transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <!-- Search bar -->
+        <div class="px-6 py-3 border-b border-outline-variant/20 shrink-0 bg-[#FAFBFC]">
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+                <input type="text" id="productosSearchInput" placeholder="Buscar producto por nombre o tienda..." 
+                       class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg text-body-sm focus:ring-primary focus:border-primary"
+                       oninput="filterProductosPopup()">
+            </div>
+        </div>
+        <div class="overflow-y-auto flex-1">
+            <div id="productosPopupLoading" class="p-8 text-center text-on-surface-variant">
+                <span class="material-symbols-outlined text-4xl animate-spin">progress_activity</span>
+                <p class="mt-2 text-body-sm">Cargando productos...</p>
+            </div>
+            <table id="productosPopupTable" class="w-full text-left border-collapse" style="display:none;">
+                <thead class="sticky top-0 z-10">
+                    <tr class="bg-[#F8FAFC] text-label-sm text-outline border-b border-outline-variant/30 uppercase tracking-wider">
+                        <th class="py-3 px-4 font-semibold">Producto</th>
+                        <th class="py-3 px-4 font-semibold">Tienda</th>
+                        <th class="py-3 px-4 font-semibold text-right">Precio</th>
+                        <th class="py-3 px-4 font-semibold text-center">Stock</th>
+                    </tr>
+                </thead>
+                <tbody id="productosPopupBody" class="text-body-sm text-on-surface divide-y divide-outline-variant/20"></tbody>
+            </table>
+            <div id="productosPopupEmpty" class="p-8 text-center text-on-surface-variant" style="display:none;">
+                No hay productos registrados en el marketplace.
+            </div>
+        </div>
+        <div class="px-6 py-3 border-t border-outline-variant/30 flex justify-end items-center shrink-0 bg-[#FAFBFC]">
+            <button onclick="closeProductosPopup()" class="px-4 py-2 bg-surface-container-high rounded-lg text-label-md font-semibold hover:bg-surface-container-highest transition-colors">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+{% csrf_token %}
+<script>
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let allProductosData = [];
+
+    // === TIENDAS POPUP ===
+    function openTiendasPopup() {
+        const popup = document.getElementById('tiendasPopup');
+        popup.style.display = 'flex';
+        document.getElementById('tiendasPopupLoading').style.display = 'block';
+        document.getElementById('tiendasPopupTable').style.display = 'none';
+        document.getElementById('tiendasPopupEmpty').style.display = 'none';
+
+        fetch('{% url "listar_tiendas_global_ajax" %}')
+        .then(r => r.json())
+        .then(res => {
+            document.getElementById('tiendasPopupLoading').style.display = 'none';
+            if (res.status === 'success' && res.tiendas.length > 0) {
+                const tbody = document.getElementById('tiendasPopupBody');
+                tbody.innerHTML = res.tiendas.map(t => `
+                    <tr class="hover:bg-surface-container-low/50 transition-colors">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-[#E2E8F0] flex-shrink-0 flex items-center justify-center font-bold text-primary text-label-sm">
+                                    ${t.nombre.substring(0,2).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p class="font-semibold">${t.nombre}</p>
+                                    <p class="text-label-sm text-on-surface-variant">${t.direccion}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-on-surface-variant">${t.username}</td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-sm font-bold bg-primary/10 text-primary">
+                                ${t.num_productos}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center font-medium">${t.total_stock}</td>
+                        <td class="py-3 px-4 text-center">
+                            ${t.activo
+                                ? '<span class="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-label-sm font-semibold">Activa</span>'
+                                : '<span class="px-2 py-0.5 bg-error/10 text-error rounded-full text-label-sm font-semibold">Inactiva</span>'
+                            }
+                        </td>
+                    </tr>
+                `).join('');
+                document.getElementById('tiendasPopupTable').style.display = 'table';
+            } else {
+                document.getElementById('tiendasPopupEmpty').style.display = 'block';
+            }
+        });
+    }
+
+    function closeTiendasPopup() {
+        document.getElementById('tiendasPopup').style.display = 'none';
+    }
+
+    // === PRODUCTOS POPUP ===
+    function openProductosPopup() {
+        const popup = document.getElementById('productosPopup');
+        popup.style.display = 'flex';
+        document.getElementById('productosPopupLoading').style.display = 'block';
+        document.getElementById('productosPopupTable').style.display = 'none';
+        document.getElementById('productosPopupEmpty').style.display = 'none';
+        document.getElementById('productosSearchInput').value = '';
+
+        fetch('{% url "listar_productos_global_ajax" %}')
+        .then(r => r.json())
+        .then(res => {
+            document.getElementById('productosPopupLoading').style.display = 'none';
+            if (res.status === 'success' && res.productos.length > 0) {
+                allProductosData = res.productos;
+                renderProductosTable(allProductosData);
+                document.getElementById('productosPopupTable').style.display = 'table';
+            } else {
+                document.getElementById('productosPopupEmpty').style.display = 'block';
+            }
+        });
+    }
+
+    function renderProductosTable(productos) {
+        const tbody = document.getElementById('productosPopupBody');
+        tbody.innerHTML = productos.map(p => `
+            <tr class="hover:bg-surface-container-low/50 transition-colors">
+                <td class="py-3 px-4">
+                    <p class="font-semibold">${p.nombre}</p>
+                </td>
+                <td class="py-3 px-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded bg-[#E2E8F0] flex-shrink-0 flex items-center justify-center font-bold text-primary text-[10px]">
+                            ${p.tienda_nombre.substring(0,2).toUpperCase()}
+                        </div>
+                        <span class="text-on-surface-variant">${p.tienda_nombre}</span>
+                        ${!p.tienda_activa ? '<span class="text-[10px] px-1 py-0.5 bg-error/10 text-error rounded font-bold">Inactiva</span>' : ''}
+                    </div>
+                </td>
+                <td class="py-3 px-4 text-right font-semibold">$${parseFloat(p.precio).toLocaleString('es-CO')}</td>
+                <td class="py-3 px-4 text-center">
+                    <span class="${p.stock > 0 ? 'text-on-surface' : 'text-error font-bold'}">${p.stock}</span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function filterProductosPopup() {
+        const query = document.getElementById('productosSearchInput').value.toLowerCase();
+        if (!query) {
+            renderProductosTable(allProductosData);
+            return;
+        }
+        const filtered = allProductosData.filter(p =>
+            p.nombre.toLowerCase().includes(query) || p.tienda_nombre.toLowerCase().includes(query)
+        );
+        renderProductosTable(filtered);
+    }
+
+    function closeProductosPopup() {
+        document.getElementById('productosPopup').style.display = 'none';
+    }
+
+    // Close modals on backdrop click
+    document.getElementById('tiendasPopup').addEventListener('click', function(e) {
+        if (e.target === this) closeTiendasPopup();
+    });
+    document.getElementById('productosPopup').addEventListener('click', function(e) {
+        if (e.target === this) closeProductosPopup();
+    });
+</script>
 </body>
 </html>

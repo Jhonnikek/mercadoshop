@@ -11,11 +11,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #faf8ff; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        
-        /* Modal simple para creación/edición */
-        #crudModal {
-            display: none;
-        }
+        #crudModal { display: none; }
     </style>
 </head>
 <body class="bg-background text-on-background antialiased flex h-screen overflow-hidden">
@@ -47,6 +43,7 @@
                                 <th class="p-4 font-semibold">Tienda (ID)</th>
                                 <th class="p-4 font-semibold">Nombre</th>
                                 <th class="p-4 font-semibold">Dirección</th>
+                                <th class="p-4 font-semibold">Productos</th>
                                 <th class="p-4 font-semibold">Estado</th>
                                 <th class="p-4 font-semibold text-right">Acciones</th>
                             </tr>
@@ -69,6 +66,12 @@
                                 </td>
                                 <td class="p-4 text-on-surface-variant t-direccion">
                                     {{ tienda.direccion }}
+                                </td>
+                                <td class="p-4 t-productos">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-bold bg-primary/10 text-primary">
+                                        <span class="material-symbols-outlined text-[14px]">inventory_2</span>
+                                        {{ tienda.num_productos }}
+                                    </span>
                                 </td>
                                 <td class="p-4 t-estado">
                                     {% if tienda.activo %}
@@ -93,7 +96,7 @@
                             </tr>
                             {% empty %}
                             <tr id="empty-row">
-                                <td colspan="4" class="p-8 text-center text-on-surface-variant">
+                                <td colspan="6" class="p-8 text-center text-on-surface-variant">
                                     No hay tiendas registradas en el sistema.
                                 </td>
                             </tr>
@@ -105,48 +108,114 @@
         </div>
     </main>
 
-    <!-- Modal Detalles -->
+    <!-- ========================================= -->
+    <!-- Modal Detalles (Enriquecido) -->
+    <!-- ========================================= -->
     <div id="detailModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" style="display:none;">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
-            <div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center">
-                <h3 class="text-headline-sm font-bold">Detalles de Tienda</h3>
-                <button onclick="closeDetailModal()" class="text-surface-variant hover:text-on-surface">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] flex flex-col">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center shrink-0">
+                <div>
+                    <h3 class="text-headline-sm font-bold">Detalles de Tienda</h3>
+                    <p id="det-subtitle" class="text-body-sm text-on-surface-variant mt-0.5"></p>
+                </div>
+                <button onclick="closeDetailModal()" class="text-surface-variant hover:text-on-surface p-1 rounded-lg hover:bg-surface-container-high transition-colors">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
-            <div class="p-6 space-y-4">
-                <div>
-                    <p class="text-label-sm text-on-surface-variant font-semibold">ID</p>
-                    <p id="det-id" class="text-body-md text-on-surface"></p>
+
+            <div class="overflow-y-auto flex-1">
+                <!-- Loading state -->
+                <div id="detailLoading" class="p-8 text-center text-on-surface-variant">
+                    <span class="material-symbols-outlined text-4xl animate-spin">progress_activity</span>
+                    <p class="mt-2 text-body-sm">Cargando información...</p>
                 </div>
-                <div>
-                    <p class="text-label-sm text-on-surface-variant font-semibold">Nombre</p>
-                    <p id="det-nombre" class="text-body-md text-on-surface"></p>
+
+                <!-- Content (hidden until loaded) -->
+                <div id="detailContent" style="display:none;">
+                    <!-- Info general -->
+                    <div class="p-6 grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-label-sm text-on-surface-variant font-semibold">ID</p>
+                            <p id="det-id" class="text-body-md text-on-surface font-medium"></p>
+                        </div>
+                        <div>
+                            <p class="text-label-sm text-on-surface-variant font-semibold">Estado</p>
+                            <p id="det-estado" class="text-body-md font-medium"></p>
+                        </div>
+                        <div>
+                            <p class="text-label-sm text-on-surface-variant font-semibold">Dirección</p>
+                            <p id="det-direccion" class="text-body-md text-on-surface"></p>
+                        </div>
+                        <div>
+                            <p class="text-label-sm text-on-surface-variant font-semibold">Usuario Vendedor</p>
+                            <p id="det-username" class="text-body-md text-on-surface"></p>
+                        </div>
+                        <div class="col-span-2">
+                            <p class="text-label-sm text-on-surface-variant font-semibold">Fecha de Creación</p>
+                            <p id="det-fecha" class="text-body-md text-on-surface"></p>
+                        </div>
+                    </div>
+
+                    <!-- Métricas de inventario -->
+                    <div class="px-6 pb-4">
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="bg-primary/5 rounded-lg p-4 text-center border border-primary/10">
+                                <p class="text-label-sm text-on-surface-variant font-semibold">Productos</p>
+                                <p id="det-num-productos" class="text-headline-md font-bold text-primary mt-1"></p>
+                            </div>
+                            <div class="bg-secondary/5 rounded-lg p-4 text-center border border-secondary/10">
+                                <p class="text-label-sm text-on-surface-variant font-semibold">Stock Total</p>
+                                <p id="det-total-stock" class="text-headline-md font-bold text-secondary mt-1"></p>
+                            </div>
+                            <div class="bg-tertiary/5 rounded-lg p-4 text-center border border-tertiary/10">
+                                <p class="text-label-sm text-on-surface-variant font-semibold">Valor Inventario</p>
+                                <p id="det-valor-inventario" class="text-headline-md font-bold text-tertiary mt-1"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de productos de la tienda -->
+                    <div class="px-6 pb-6">
+                        <div class="border border-outline-variant/50 rounded-lg overflow-hidden">
+                            <div class="bg-[#F8FAFC] px-4 py-3 border-b border-outline-variant/30 flex justify-between items-center">
+                                <h4 class="text-label-md font-semibold text-on-surface flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px] text-primary">inventory_2</span>
+                                    Productos de esta Tienda
+                                </h4>
+                                <span id="det-productos-count" class="text-label-sm text-on-surface-variant"></span>
+                            </div>
+                            <div class="max-h-[250px] overflow-y-auto">
+                                <table id="det-productos-table" class="w-full text-left border-collapse" style="display:none;">
+                                    <thead class="sticky top-0 z-10">
+                                        <tr class="bg-white text-label-sm text-outline border-b border-outline-variant/20 uppercase tracking-wider">
+                                            <th class="py-2 px-4 font-semibold">Producto</th>
+                                            <th class="py-2 px-4 font-semibold text-right">Precio</th>
+                                            <th class="py-2 px-4 font-semibold text-center">Stock</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="det-productos-tbody" class="text-body-sm text-on-surface divide-y divide-outline-variant/15"></tbody>
+                                </table>
+                                <div id="det-productos-empty" class="py-6 text-center text-on-surface-variant text-body-sm" style="display:none;">
+                                    <span class="material-symbols-outlined text-3xl text-outline mb-2 block">inventory_2</span>
+                                    Esta tienda aún no tiene productos registrados.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-label-sm text-on-surface-variant font-semibold">Dirección</p>
-                    <p id="det-direccion" class="text-body-md text-on-surface"></p>
-                </div>
-                <div>
-                    <p class="text-label-sm text-on-surface-variant font-semibold">Usuario Asociado</p>
-                    <p id="det-username" class="text-body-md text-on-surface"></p>
-                </div>
-                <div>
-                    <p class="text-label-sm text-on-surface-variant font-semibold">Fecha de Creación</p>
-                    <p id="det-fecha" class="text-body-md text-on-surface"></p>
-                </div>
-                <div>
-                    <p class="text-label-sm text-on-surface-variant font-semibold">Estado</p>
-                    <p id="det-estado" class="text-body-md text-on-surface font-medium"></p>
-                </div>
-                <div class="flex justify-end pt-4">
-                    <button onclick="closeDetailModal()" class="px-4 py-2 bg-surface-container-high rounded-lg text-label-md font-semibold">Cerrar</button>
-                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-3 border-t border-outline-variant/30 flex justify-end shrink-0 bg-[#FAFBFC]">
+                <button onclick="closeDetailModal()" class="px-4 py-2 bg-surface-container-high rounded-lg text-label-md font-semibold hover:bg-surface-container-highest transition-colors">Cerrar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal CRUD (Tailwind) -->
+    <!-- ========================================= -->
+    <!-- Modal CRUD -->
+    <!-- ========================================= -->
     <div id="crudModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" style="display:none;">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
             <div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center">
@@ -197,6 +266,9 @@
         const detailModal = document.getElementById('detailModal');
         const form = document.getElementById('crudForm');
 
+        // ========================================
+        // CRUD Modal
+        // ========================================
         function openModal(action, id='', nombre='', direccion='', username='', activo='true') {
             document.getElementById('action-type').value = action;
             document.getElementById('tienda-id').value = id;
@@ -206,8 +278,6 @@
             document.getElementById('tienda-activo').checked = (activo === 'true' || activo === true);
             document.getElementById('modalTitle').innerText = action === 'create' ? 'Nueva Tienda' : 'Editar Tienda';
             
-            // Mostrar u ocultar campo de usuario dependiendo si es crear o editar
-            // Ahora mostramos username en ambos casos, pero en create es obligatorio
             document.getElementById('div-username').style.display = 'block';
             
             if(action === 'create') {
@@ -232,19 +302,65 @@
             modal.style.display = 'none';
         }
         
+        // ========================================
+        // Detail Modal (Enriquecido)
+        // ========================================
         function openDetailModal(id) {
+            detailModal.style.display = 'flex';
+            document.getElementById('detailLoading').style.display = 'block';
+            document.getElementById('detailContent').style.display = 'none';
+
             fetch(`/panel/tiendas/${id}/detalle/`)
             .then(r => r.json())
             .then(res => {
+                document.getElementById('detailLoading').style.display = 'none';
                 if(res.status === 'success') {
-                    document.getElementById('det-id').innerText = `ST-${res.tienda.id}`;
-                    document.getElementById('det-nombre').innerText = res.tienda.nombre;
-                    document.getElementById('det-direccion').innerText = res.tienda.direccion;
-                    document.getElementById('det-username').innerText = res.tienda.username;
-                    document.getElementById('det-fecha').innerText = res.tienda.fecha_creacion;
-                    document.getElementById('det-estado').innerText = res.tienda.activo ? 'Activa' : 'Inactiva';
-                    document.getElementById('det-estado').className = res.tienda.activo ? 'text-body-md text-primary font-medium' : 'text-body-md text-error font-medium';
-                    detailModal.style.display = 'flex';
+                    const t = res.tienda;
+                    
+                    // Info general
+                    document.getElementById('det-subtitle').innerText = `${t.nombre} — ST-${t.id}`;
+                    document.getElementById('det-id').innerText = `ST-${t.id}`;
+                    document.getElementById('det-direccion').innerText = t.direccion;
+                    document.getElementById('det-username').innerText = t.username;
+                    document.getElementById('det-fecha').innerText = t.fecha_creacion;
+                    
+                    const estadoEl = document.getElementById('det-estado');
+                    estadoEl.innerText = t.activo ? 'Activa' : 'Inactiva';
+                    estadoEl.className = t.activo
+                        ? 'text-body-md text-primary font-medium'
+                        : 'text-body-md text-error font-medium';
+
+                    // Métricas
+                    document.getElementById('det-num-productos').innerText = t.num_productos;
+                    document.getElementById('det-total-stock').innerText = t.total_stock.toLocaleString('es-CO');
+                    document.getElementById('det-valor-inventario').innerText = '$' + parseFloat(t.valor_inventario).toLocaleString('es-CO');
+
+                    // Tabla de productos
+                    const productos = res.productos || [];
+                    document.getElementById('det-productos-count').innerText = `${productos.length} producto${productos.length !== 1 ? 's' : ''}`;
+                    
+                    if (productos.length > 0) {
+                        const tbody = document.getElementById('det-productos-tbody');
+                        tbody.innerHTML = productos.map(p => `
+                            <tr class="hover:bg-surface-container-low/30 transition-colors">
+                                <td class="py-2.5 px-4">
+                                    <p class="font-medium">${p.nombre}</p>
+                                    ${p.descripcion ? `<p class="text-label-sm text-on-surface-variant truncate max-w-[250px]">${p.descripcion}</p>` : ''}
+                                </td>
+                                <td class="py-2.5 px-4 text-right font-semibold">$${parseFloat(p.precio).toLocaleString('es-CO')}</td>
+                                <td class="py-2.5 px-4 text-center">
+                                    <span class="${p.stock > 0 ? 'text-on-surface' : 'text-error font-bold'}">${p.stock}</span>
+                                </td>
+                            </tr>
+                        `).join('');
+                        document.getElementById('det-productos-table').style.display = 'table';
+                        document.getElementById('det-productos-empty').style.display = 'none';
+                    } else {
+                        document.getElementById('det-productos-table').style.display = 'none';
+                        document.getElementById('det-productos-empty').style.display = 'block';
+                    }
+
+                    document.getElementById('detailContent').style.display = 'block';
                 } else {
                     alert('Error al cargar detalles');
                 }
@@ -255,6 +371,9 @@
             detailModal.style.display = 'none';
         }
 
+        // ========================================
+        // CRUD Form Submit
+        // ========================================
         form.onsubmit = function(e) {
             e.preventDefault();
             const action = document.getElementById('action-type').value;
@@ -274,7 +393,6 @@
                 data.append('password', password);
             } else {
                 if (username.trim() !== '') data.append('username', username);
-                // Si es edit, enviamos la password solo si se llenó
                 if (password.trim() !== '') {
                     data.append('password', password);
                 }
@@ -291,7 +409,6 @@
             .then(res => {
                 if (res.status === 'success') {
                     if (action === 'create') {
-                        // Remove empty row if exists
                         const emptyRow = document.getElementById('empty-row');
                         if (emptyRow) emptyRow.remove();
                         
@@ -309,6 +426,12 @@
                             </td>
                             <td class="p-4 font-medium t-nombre">${res.nombre}</td>
                             <td class="p-4 text-on-surface-variant t-direccion">${res.direccion}</td>
+                            <td class="p-4 t-productos">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-bold bg-primary/10 text-primary">
+                                    <span class="material-symbols-outlined text-[14px]">inventory_2</span>
+                                    ${res.num_productos || 0}
+                                </span>
+                            </td>
                             <td class="p-4 t-estado">
                                 ${res.activo 
                                     ? '<span class="px-2 py-1 bg-primary/10 text-primary rounded-full text-label-sm font-semibold">Activo</span>'
@@ -345,6 +468,9 @@
             });
         };
 
+        // ========================================
+        // Delete
+        // ========================================
         function deleteTienda(id) {
             if (!confirm('¿Seguro que deseas eliminar esta tienda permanentemente?')) return;
             
@@ -359,6 +485,14 @@
                 }
             });
         }
+
+        // Close modals on backdrop click
+        detailModal.addEventListener('click', function(e) {
+            if (e.target === this) closeDetailModal();
+        });
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
     </script>
 </body>
 </html>

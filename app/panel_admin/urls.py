@@ -12,4 +12,7 @@ urlpatterns = [
     path('tiendas/<int:id>/editar/', views.editarTiendaAjax, name='editar_tienda_ajax'),
     path('tiendas/<int:id>/eliminar/', views.eliminarTiendaAjax, name='eliminar_tienda_ajax'),
     path('tiendas/<int:id>/detalle/', views.detalleTiendaAjax, name='detalle_tienda_ajax'),
+    # AJAX endpoints para popups del dashboard
+    path('ajax/productos/', views.listarProductosGlobalAjax, name='listar_productos_global_ajax'),
+    path('ajax/tiendas/', views.listarTiendasGlobalAjax, name='listar_tiendas_global_ajax'),
 ]
