@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../../../core/theme.dart';
 import '../../../models/producto.dart';
+import '../../../providers/producto_provider.dart';
 
 class ProductoDialog extends StatefulWidget {
   final Producto? producto; // null = create mode
-  final Future<bool> Function(Producto producto) onSave;
 
   const ProductoDialog({
     super.key,
     this.producto,
-    required this.onSave,
   });
 
   @override
@@ -32,14 +33,10 @@ class _ProductoDialogState extends State<ProductoDialog> {
     super.initState();
     _nombreCtrl = TextEditingController(text: widget.producto?.nombre ?? '');
     _precioCtrl = TextEditingController(
-      text: widget.producto != null
-          ? widget.producto!.precio.toString()
-          : '',
+      text: widget.producto != null ? widget.producto!.precio.toString() : '',
     );
     _stockCtrl = TextEditingController(
-      text: widget.producto != null
-          ? widget.producto!.stock.toString()
-          : '',
+      text: widget.producto != null ? widget.producto!.stock.toString() : '',
     );
     _descripcionCtrl =
         TextEditingController(text: widget.producto?.descripcion ?? '');
@@ -58,7 +55,7 @@ class _ProductoDialogState extends State<ProductoDialog> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
 
-    final producto = Producto(
+    final nuevoProducto = Producto(
       id: widget.producto?.id,
       nombre: _nombreCtrl.text.trim(),
       precio: double.parse(_precioCtrl.text.trim()),
@@ -66,17 +63,37 @@ class _ProductoDialogState extends State<ProductoDialog> {
       descripcion: _descripcionCtrl.text.trim(),
     );
 
-    final ok = await widget.onSave(producto);
-    if (!mounted) return;
-
-    if (ok) {
-      Navigator.pop(context, true);
-    } else {
+    try {
+      final provider = context.read<ProductoProvider>();
+      if (widget.producto == null) {
+        await provider.createProducto(nuevoProducto);
+      } else {
+        await provider.updateProducto(widget.producto!.id!, nuevoProducto);
+      }
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error al ${_isEditing ? "actualizar" : "crear"} producto'),
-          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          backgroundColor: AppTheme.danger.withAlpha(38),
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline_rounded,
+                  color: AppTheme.danger, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Error: $e',
+                  style: GoogleFonts.inter(
+                      fontSize: 14, color: AppTheme.danger),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -84,13 +101,11 @@ class _ProductoDialogState extends State<ProductoDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     return Dialog(
-      backgroundColor: const Color(0xFF1E1E34),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: AppTheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
+        constraints: const BoxConstraints(maxWidth: 500),
         child: Padding(
           padding: const EdgeInsets.all(28),
           child: Form(
@@ -99,19 +114,21 @@ class _ProductoDialogState extends State<ProductoDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Title ────────────────────────────────────
+                // ── Header ──────────────────────────────────
                 Row(
                   children: [
                     Container(
-                      width: 38,
-                      height: 38,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        color: cs.primary.withAlpha(40),
+                        color: AppTheme.primary.withAlpha(38),
                       ),
                       child: Icon(
-                        _isEditing ? Icons.edit_rounded : Icons.add_rounded,
-                        color: cs.primary,
+                        _isEditing
+                            ? Icons.edit_rounded
+                            : Icons.add_rounded,
+                        color: AppTheme.primary,
                         size: 20,
                       ),
                     ),
@@ -121,13 +138,14 @@ class _ProductoDialogState extends State<ProductoDialog> {
                       style: GoogleFonts.inter(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: AppTheme.textPrimary,
                       ),
                     ),
                     const Spacer(),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded, size: 20),
+                      icon: const Icon(Icons.close_rounded,
+                          size: 20, color: AppTheme.textSecondary),
                       splashRadius: 18,
                     ),
                   ],
@@ -135,12 +153,16 @@ class _ProductoDialogState extends State<ProductoDialog> {
                 const SizedBox(height: 24),
 
                 // ── Nombre ──────────────────────────────────
+                _FieldLabel('Nombre'),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _nombreCtrl,
                   enabled: !_saving,
+                  style: GoogleFonts.inter(
+                      fontSize: 14, color: AppTheme.textPrimary),
                   decoration: const InputDecoration(
-                    labelText: 'Nombre *',
-                    prefixIcon: Icon(Icons.label_outline_rounded),
+                    hintText: 'Nombre del producto',
+                    prefixIcon: Icon(Icons.label_outline_rounded, size: 18),
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) return 'Requerido';
@@ -150,112 +172,150 @@ class _ProductoDialogState extends State<ProductoDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                // ── Precio & Stock ──────────────────────────
+                // ── Precio & Stock ───────────────────────────
                 Row(
                   children: [
                     Expanded(
-                      child: TextFormField(
-                        controller: _precioCtrl,
-                        enabled: !_saving,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d+\.?\d{0,2}'),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _FieldLabel('Precio'),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _precioCtrl,
+                            enabled: !_saving,
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                  RegExp(r'^\d+\.?\d{0,2}')),
+                            ],
+                            style: GoogleFonts.inter(
+                                fontSize: 14, color: AppTheme.textPrimary),
+                            decoration: const InputDecoration(
+                              hintText: '0.00',
+                              prefixIcon: Icon(Icons.attach_money_rounded,
+                                  size: 18),
+                            ),
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) {
+                                return 'Requerido';
+                              }
+                              final n = double.tryParse(v.trim());
+                              if (n == null || n <= 0) return 'Debe ser > 0';
+                              return null;
+                            },
                           ),
                         ],
-                        decoration: const InputDecoration(
-                          labelText: 'Precio *',
-                          prefixIcon: Icon(Icons.attach_money_rounded),
-                        ),
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'Requerido';
-                          final n = double.tryParse(v.trim());
-                          if (n == null || n <= 0) return 'Debe ser > 0';
-                          return null;
-                        },
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 16),
                     Expanded(
-                      child: TextFormField(
-                        controller: _stockCtrl,
-                        enabled: !_saving,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _FieldLabel('Stock'),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _stockCtrl,
+                            enabled: !_saving,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            style: GoogleFonts.inter(
+                                fontSize: 14, color: AppTheme.textPrimary),
+                            decoration: const InputDecoration(
+                              hintText: '0',
+                              prefixIcon:
+                                  Icon(Icons.inventory_rounded, size: 18),
+                            ),
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) {
+                                return 'Requerido';
+                              }
+                              final n = int.tryParse(v.trim());
+                              if (n == null || n < 0) return 'Debe ser >= 0';
+                              return null;
+                            },
+                          ),
                         ],
-                        decoration: const InputDecoration(
-                          labelText: 'Stock *',
-                          prefixIcon: Icon(Icons.inventory_rounded),
-                        ),
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'Requerido';
-                          final n = int.tryParse(v.trim());
-                          if (n == null || n < 0) return 'Debe ser >= 0';
-                          return null;
-                        },
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
 
-                // ── Descripción ─────────────────────────────
+                // ── Descripción ──────────────────────────────
+                _FieldLabel('Descripción (opcional)'),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _descripcionCtrl,
                   enabled: !_saving,
                   maxLines: 3,
+                  style: GoogleFonts.inter(
+                      fontSize: 14, color: AppTheme.textPrimary),
                   decoration: const InputDecoration(
-                    labelText: 'Descripción (opcional)',
+                    hintText: 'Descripción breve del producto...',
                     prefixIcon: Padding(
                       padding: EdgeInsets.only(bottom: 40),
-                      child: Icon(Icons.description_outlined),
+                      child: Icon(Icons.description_outlined, size: 18),
                     ),
                     alignLabelWithHint: true,
                   ),
                 ),
                 const SizedBox(height: 28),
 
-                // ── Buttons ─────────────────────────────────
+                // ── Actions ──────────────────────────────────
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    TextButton(
+                    // Ghost cancel button
+                    OutlinedButton(
                       onPressed: _saving ? null : () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.textSecondary,
+                        side: const BorderSide(color: AppTheme.border),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                       child: Text(
                         'Cancelar',
                         style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white54,
-                        ),
+                            fontSize: 14, fontWeight: FontWeight.w500),
                       ),
                     ),
                     const SizedBox(width: 12),
+                    // Primary save button
                     SizedBox(
-                      width: 130,
                       height: 44,
+                      width: 130,
                       child: ElevatedButton(
                         onPressed: _saving ? null : _submit,
                         style: ElevatedButton.styleFrom(
-                          minimumSize: Size.zero,
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: AppTheme.textPrimary,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                           ),
+                          elevation: 0,
                         ),
                         child: _saving
                             ? const SizedBox(
-                                width: 22,
-                                height: 22,
+                                width: 20,
+                                height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.5,
-                                  color: Colors.white,
+                                  color: AppTheme.textPrimary,
                                 ),
                               )
                             : Text(
                                 'Guardar',
                                 style: GoogleFonts.inter(
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -267,6 +327,24 @@ class _ProductoDialogState extends State<ProductoDialog> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Shared label widget ─────────────────────────────────────
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: GoogleFonts.inter(
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        color: AppTheme.textSecondary,
       ),
     );
   }

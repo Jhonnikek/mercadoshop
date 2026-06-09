@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme.dart';
 
 class StatsCards extends StatelessWidget {
   final int totalProductos;
@@ -19,58 +20,63 @@ class StatsCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _StatCard(
-            icon: Icons.inventory_2_rounded,
-            label: 'Total Productos',
-            value: '$totalProductos',
-            gradient: const [Color(0xFF3F51B5), Color(0xFF5C6BC0)],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _StatCard(
+              icon: Icons.inventory_2_rounded,
+              iconColor: AppTheme.primary,
+              label: 'Total Productos',
+              value: '$totalProductos',
+            ),
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _StatCard(
-            icon: Icons.trending_up_rounded,
-            label: 'Mayor Stock',
-            value: mayorStockNombre ?? '—',
-            subtitle: mayorStockValor != null
-                ? '$mayorStockValor unidades'
-                : null,
-            gradient: const [Color(0xFF00897B), Color(0xFF00BFA5)],
+          const SizedBox(width: 16),
+          Expanded(
+            child: _StatCard(
+              icon: Icons.trending_up_rounded,
+              iconColor: AppTheme.success,
+              label: 'Mayor Stock',
+              value: mayorStockNombre ?? '—',
+              subtitle: mayorStockValor != null ? '$mayorStockValor unidades' : null,
+              subtitleColor: AppTheme.success,
+            ),
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _StatCard(
-            icon: Icons.attach_money_rounded,
-            label: 'Más Caro',
-            value: masCaroNombre ?? '—',
-            subtitle: masCaroPrecio != null
-                ? '\$${masCaroPrecio!.toStringAsFixed(2)}'
-                : null,
-            gradient: const [Color(0xFFE65100), Color(0xFFFFA726)],
+          const SizedBox(width: 16),
+          Expanded(
+            child: _StatCard(
+              icon: Icons.attach_money_rounded,
+              iconColor: AppTheme.warning,
+              label: 'Más Caro',
+              value: masCaroNombre ?? '—',
+              subtitle: masCaroPrecio != null
+                  ? '\$${masCaroPrecio!.toStringAsFixed(2)}'
+                  : null,
+              subtitleColor: AppTheme.warning,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
 class _StatCard extends StatefulWidget {
   final IconData icon;
+  final Color iconColor;
   final String label;
   final String value;
   final String? subtitle;
-  final List<Color> gradient;
+  final Color? subtitleColor;
 
   const _StatCard({
     required this.icon,
+    required this.iconColor,
     required this.label,
     required this.value,
     this.subtitle,
-    required this.gradient,
+    this.subtitleColor,
   });
 
   @override
@@ -86,63 +92,52 @@ class _StatCardState extends State<_StatCard> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
+        duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
-        transform: Matrix4.diagonal3Values(_hovered ? 1.02 : 1.0, _hovered ? 1.02 : 1.0, 1.0),
-        transformAlignment: Alignment.center,
-        padding: const EdgeInsets.all(22),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              widget.gradient[0].withAlpha(50),
-              widget.gradient[1].withAlpha(25),
-            ],
-          ),
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: widget.gradient[0].withAlpha(60),
-            width: 1,
+            color: AppTheme.border.withAlpha(_hovered ? 255 : 153),
           ),
-          boxShadow: _hovered
-              ? [
-                  BoxShadow(
-                    color: widget.gradient[0].withAlpha(40),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : [],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(_hovered ? 46 : 25),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Icon row
+            // ── Icon container ──────────────────────────────
             Container(
-              width: 42,
-              height: 42,
+              width: 52,
+              height: 52,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                gradient: LinearGradient(colors: widget.gradient),
+                color: widget.iconColor.withAlpha(38),
               ),
-              child: Icon(widget.icon, size: 22, color: Colors.white),
+              child: Icon(widget.icon, size: 22, color: widget.iconColor),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
-            // Label
+            // ── Label ───────────────────────────────────────
             Text(
               widget.label,
               style: GoogleFonts.inter(
                 fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.white54,
-                letterSpacing: 0.5,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textSecondary,
+                letterSpacing: 0.4,
               ),
             ),
             const SizedBox(height: 6),
 
-            // Value
+            // ── Value ───────────────────────────────────────
             Text(
               widget.value,
               maxLines: 1,
@@ -150,18 +145,19 @@ class _StatCardState extends State<_StatCard> {
               style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: Colors.white,
+                color: AppTheme.textPrimary,
               ),
             ),
 
+            // ── Subtitle ────────────────────────────────────
             if (widget.subtitle != null) ...[
               const SizedBox(height: 4),
               Text(
                 widget.subtitle!,
                 style: GoogleFonts.inter(
                   fontSize: 13,
-                  color: widget.gradient[1],
                   fontWeight: FontWeight.w500,
+                  color: widget.subtitleColor ?? AppTheme.textSecondary,
                 ),
               ),
             ],

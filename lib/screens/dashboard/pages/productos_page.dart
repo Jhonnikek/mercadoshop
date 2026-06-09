@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../../../core/theme.dart';
 import '../../../models/producto.dart';
 import '../../../providers/producto_provider.dart';
 import '../widgets/producto_dialog.dart';
@@ -26,7 +27,6 @@ class _ProductosPageState extends State<ProductosPage> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ProductoProvider>();
-    final cs = Theme.of(context).colorScheme;
     final productos = provider.productos;
     final totalPages = (productos.length / _rowsPerPage).ceil();
 
@@ -42,33 +42,36 @@ class _ProductosPageState extends State<ProductosPage> {
         productos.isNotEmpty ? productos.sublist(startIdx, endIdx) : <Producto>[];
 
     return Padding(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ─────────────────────────────────────────
+          // ── Header ───────────────────────────────────────
           Text(
             'Productos',
             style: GoogleFonts.inter(
               fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
               letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             'Gestiona tu inventario',
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.white54),
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: AppTheme.textSecondary,
+            ),
           ),
           const SizedBox(height: 24),
 
-          // ── Search + Create ────────────────────────────────
+          // ── Toolbar ──────────────────────────────────────
           Row(
             children: [
-              // Search field
+              // Search
               SizedBox(
-                width: 320,
+                width: 300,
                 height: 44,
                 child: TextField(
                   controller: _searchCtrl,
@@ -76,14 +79,16 @@ class _ProductosPageState extends State<ProductosPage> {
                     provider.setSearch(v);
                     setState(() => _currentPage = 0);
                   },
-                  style: GoogleFonts.inter(fontSize: 14),
+                  style: GoogleFonts.inter(
+                      fontSize: 14, color: AppTheme.textPrimary),
                   decoration: InputDecoration(
                     hintText: 'Buscar por nombre...',
                     prefixIcon:
-                        const Icon(Icons.search_rounded, size: 20),
+                        const Icon(Icons.search_rounded, size: 18),
                     suffixIcon: _searchCtrl.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.close_rounded, size: 18),
+                            icon:
+                                const Icon(Icons.close_rounded, size: 16),
                             onPressed: () {
                               _searchCtrl.clear();
                               provider.setSearch('');
@@ -92,61 +97,69 @@ class _ProductosPageState extends State<ProductosPage> {
                           )
                         : null,
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 0,
-                    ),
+                        horizontal: 16, vertical: 0),
+                    filled: true,
+                    fillColor: AppTheme.surfaceLight,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
+                      borderSide: const BorderSide(color: AppTheme.border),
                     ),
-                    filled: true,
-                    fillColor: const Color(0xFF252540),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: AppTheme.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(
+                          color: AppTheme.primary, width: 1.5),
+                    ),
                   ),
                 ),
               ),
               const Spacer(),
-              SizedBox(
-                height: 44,
-                child: ElevatedButton.icon(
-                  onPressed: () => _openDialog(context, provider),
-                  icon: const Icon(Icons.add_rounded, size: 20),
-                  label: Text(
-                    'Nuevo Producto',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+              // New product button
+              ElevatedButton.icon(
+                onPressed: () => _openDialog(context),
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: Text(
+                  'Nuevo Producto',
+                  style: GoogleFonts.inter(
+                      fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: AppTheme.textPrimary,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size.zero,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+                  minimumSize: const Size(0, 44),
+                  elevation: 0,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
 
-          // ── Table ──────────────────────────────────────────
-          Expanded(child: _buildBody(provider, pageItems, cs)),
+          // ── Table ─────────────────────────────────────────
+          Expanded(child: _buildBody(provider, pageItems)),
 
-          // ── Pagination ─────────────────────────────────────
+          // ── Pagination ────────────────────────────────────
           if (totalPages > 1) ...[
-            const SizedBox(height: 12),
-            _buildPagination(totalPages, cs),
+            const SizedBox(height: 16),
+            _buildPagination(totalPages),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildBody(
-    ProductoProvider provider,
-    List<Producto> pageItems,
-    ColorScheme cs,
-  ) {
+  Widget _buildBody(ProductoProvider provider, List<Producto> pageItems) {
     if (provider.status == ProductoStatus.loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(color: AppTheme.primary),
+      );
     }
 
     if (provider.status == ProductoStatus.error) {
@@ -155,17 +168,24 @@ class _ProductosPageState extends State<ProductosPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.error_outline_rounded,
-                size: 48, color: Colors.white30),
-            const SizedBox(height: 14),
+                size: 48, color: AppTheme.textSecondary),
+            const SizedBox(height: 16),
             Text(
               provider.errorMessage,
-              style: GoogleFonts.inter(color: Colors.white54),
+              style: GoogleFonts.inter(
+                  fontSize: 14, color: AppTheme.textSecondary),
             ),
-            const SizedBox(height: 12),
-            TextButton.icon(
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
               onPressed: () => provider.loadProductos(),
-              icon: const Icon(Icons.refresh_rounded),
+              icon: const Icon(Icons.refresh_rounded, size: 16),
               label: const Text('Reintentar'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.primary,
+                side: const BorderSide(color: AppTheme.primary),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
             ),
           ],
         ),
@@ -177,21 +197,30 @@ class _ProductosPageState extends State<ProductosPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.inventory_2_outlined,
-                size: 56, color: Colors.white24),
-            const SizedBox(height: 14),
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: AppTheme.surfaceLight,
+              ),
+              child: const Icon(Icons.inventory_2_outlined,
+                  size: 32, color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: 16),
             Text(
               'Sin productos aún',
               style: GoogleFonts.inter(
                 fontSize: 16,
-                color: Colors.white54,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               'Crea tu primer producto para comenzar',
-              style: GoogleFonts.inter(fontSize: 13, color: Colors.white38),
+              style: GoogleFonts.inter(
+                  fontSize: 13, color: AppTheme.textSecondary),
             ),
           ],
         ),
@@ -202,34 +231,89 @@ class _ProductosPageState extends State<ProductosPage> {
       return Center(
         child: Text(
           'Sin resultados para "${provider.searchQuery}"',
-          style: GoogleFonts.inter(color: Colors.white54),
+          style: GoogleFonts.inter(
+              fontSize: 14, color: AppTheme.textSecondary),
         ),
       );
     }
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: const Color(0xFF1E1E34),
-        border: Border.all(color: const Color(0xFF2A2A45)),
+        borderRadius: BorderRadius.circular(12),
+        color: AppTheme.surface,
+        border: Border.all(color: AppTheme.border),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: SingleChildScrollView(
           child: SizedBox(
             width: double.infinity,
             child: DataTable(
               columnSpacing: 24,
-              horizontalMargin: 20,
+              horizontalMargin: 16,
               headingRowHeight: 48,
               dataRowMinHeight: 52,
               dataRowMaxHeight: 52,
-              columns: const [
-                DataColumn(label: Text('Nombre')),
-                DataColumn(label: Text('Precio'), numeric: true),
-                DataColumn(label: Text('Stock'), numeric: true),
-                DataColumn(label: Text('Descripción')),
-                DataColumn(label: Text('Acciones')),
+              headingRowColor: WidgetStateProperty.all(AppTheme.surfaceLight),
+              dividerThickness: 0.5,
+              columns: [
+                DataColumn(
+                  label: Text(
+                    'NOMBRE',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  numeric: true,
+                  label: Text(
+                    'PRECIO',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  numeric: true,
+                  label: Text(
+                    'STOCK',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'DESCRIPCIÓN',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'ACCIONES',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
               ],
               rows: pageItems.map((p) => _buildRow(p, provider)).toList(),
             ),
@@ -240,31 +324,45 @@ class _ProductosPageState extends State<ProductosPage> {
   }
 
   DataRow _buildRow(Producto p, ProductoProvider provider) {
+    // Stock color indicator
+    final stockColor = p.stock > 10
+        ? AppTheme.success
+        : p.stock > 0
+            ? AppTheme.warning
+            : AppTheme.danger;
+
     return DataRow(
       cells: [
         DataCell(Text(
           p.nombre,
-          style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+          style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textPrimary),
         )),
-        DataCell(Text('\$${p.precio.toStringAsFixed(2)}')),
+        DataCell(Text(
+          '\$${p.precio.toStringAsFixed(2)}',
+          style: GoogleFonts.inter(
+              fontSize: 14, color: AppTheme.textPrimary),
+        )),
         DataCell(
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 8,
-                height: 8,
+                width: 7,
+                height: 7,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: p.stock > 10
-                      ? const Color(0xFF66BB6A)
-                      : p.stock > 0
-                          ? const Color(0xFFFFA726)
-                          : const Color(0xFFEF5350),
+                  color: stockColor,
                 ),
               ),
               const SizedBox(width: 8),
-              Text('${p.stock}'),
+              Text(
+                '${p.stock}',
+                style: GoogleFonts.inter(
+                    fontSize: 14, color: AppTheme.textPrimary),
+              ),
             ],
           ),
         ),
@@ -272,6 +370,8 @@ class _ProductosPageState extends State<ProductosPage> {
           p.descripcion.isNotEmpty ? p.descripcion : '—',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+              fontSize: 14, color: AppTheme.textSecondary),
         )),
         DataCell(
           Row(
@@ -279,14 +379,14 @@ class _ProductosPageState extends State<ProductosPage> {
             children: [
               _ActionIcon(
                 icon: Icons.edit_rounded,
-                color: const Color(0xFF5C6BC0),
+                color: AppTheme.primary,
                 tooltip: 'Editar',
-                onTap: () => _openDialog(context, provider, producto: p),
+                onTap: () => _openDialog(context, producto: p),
               ),
               const SizedBox(width: 4),
               _ActionIcon(
                 icon: Icons.delete_rounded,
-                color: const Color(0xFFEF5350),
+                color: AppTheme.danger,
                 tooltip: 'Eliminar',
                 onTap: () => _confirmDelete(context, provider, p),
               ),
@@ -297,14 +397,15 @@ class _ProductosPageState extends State<ProductosPage> {
     );
   }
 
-  Widget _buildPagination(int totalPages, ColorScheme cs) {
+  Widget _buildPagination(int totalPages) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
           onPressed:
               _currentPage > 0 ? () => setState(() => _currentPage--) : null,
-          icon: const Icon(Icons.chevron_left_rounded),
+          icon: const Icon(Icons.chevron_left_rounded,
+              color: AppTheme.textSecondary),
           splashRadius: 18,
         ),
         for (int i = 0; i < totalPages; i++)
@@ -314,24 +415,29 @@ class _ProductosPageState extends State<ProductosPage> {
               borderRadius: BorderRadius.circular(8),
               onTap: () => setState(() => _currentPage = i),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 34,
-                height: 34,
+                duration: const Duration(milliseconds: 180),
+                width: 32,
+                height: 32,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: _currentPage == i
-                      ? cs.primary
+                      ? AppTheme.primary
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
+                  border: _currentPage == i
+                      ? null
+                      : Border.all(color: AppTheme.border.withAlpha(0)),
                 ),
                 child: Text(
                   '${i + 1}',
                   style: GoogleFonts.inter(
+                    fontSize: 13,
                     fontWeight: _currentPage == i
                         ? FontWeight.w700
                         : FontWeight.w400,
-                    color: Colors.white,
-                    fontSize: 13,
+                    color: _currentPage == i
+                        ? AppTheme.textPrimary
+                        : AppTheme.textSecondary,
                   ),
                 ),
               ),
@@ -341,31 +447,19 @@ class _ProductosPageState extends State<ProductosPage> {
           onPressed: _currentPage < totalPages - 1
               ? () => setState(() => _currentPage++)
               : null,
-          icon: const Icon(Icons.chevron_right_rounded),
+          icon: const Icon(Icons.chevron_right_rounded,
+              color: AppTheme.textSecondary),
           splashRadius: 18,
         ),
       ],
     );
   }
 
-  void _openDialog(
-    BuildContext context,
-    ProductoProvider provider, {
-    Producto? producto,
-  }) {
+  void _openDialog(BuildContext context, {Producto? producto}) {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => ProductoDialog(
-        producto: producto,
-        onSave: (p) async {
-          if (producto != null && producto.id != null) {
-            return provider.updateProducto(producto.id!, p);
-          } else {
-            return provider.createProducto(p);
-          }
-        },
-      ),
+      builder: (_) => ProductoDialog(producto: producto),
     );
   }
 
@@ -377,73 +471,114 @@ class _ProductosPageState extends State<ProductosPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E34),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: AppTheme.surface,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
             Container(
-              width: 38,
-              height: 38,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: const Color(0xFFEF5350).withAlpha(40),
+                color: AppTheme.danger.withAlpha(38),
               ),
               child: const Icon(
                 Icons.warning_rounded,
-                color: Color(0xFFEF5350),
+                color: AppTheme.danger,
                 size: 20,
               ),
             ),
             const SizedBox(width: 12),
-            const Text('Confirmar eliminación'),
+            Text(
+              'Confirmar eliminación',
+              style: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
+            ),
           ],
         ),
         content: RichText(
           text: TextSpan(
-            style: GoogleFonts.inter(color: Colors.white70, fontSize: 14),
+            style: GoogleFonts.inter(
+                fontSize: 14, color: AppTheme.textSecondary),
             children: [
               const TextSpan(text: '¿Estás seguro de eliminar '),
               TextSpan(
                 text: p.nombre,
                 style: const TextStyle(
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: AppTheme.textPrimary,
                 ),
               ),
               const TextSpan(text: '? Esta acción no se puede deshacer.'),
             ],
           ),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(
+          // Ghost cancel
+          OutlinedButton(
             onPressed: () => Navigator.pop(ctx),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.textSecondary,
+              side: const BorderSide(color: AppTheme.border),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
             child: Text(
               'Cancelar',
-              style: GoogleFonts.inter(color: Colors.white54),
+              style: GoogleFonts.inter(
+                  fontSize: 14, fontWeight: FontWeight.w500),
             ),
           ),
-          ElevatedButton(
+          const SizedBox(width: 8),
+          // Danger delete
+          ElevatedButton.icon(
             onPressed: () async {
-              Navigator.pop(ctx);
               final ok = await provider.deleteProducto(p.id!);
+              if (context.mounted) Navigator.of(ctx).pop();
               if (context.mounted && !ok) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Error al eliminar producto'),
-                    backgroundColor: Color(0xFFEF5350),
+                  SnackBar(
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    backgroundColor: AppTheme.danger.withAlpha(38),
+                    content: Row(
+                      children: [
+                        const Icon(Icons.error_outline_rounded,
+                            color: AppTheme.danger, size: 18),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Error al eliminar producto',
+                          style: GoogleFonts.inter(
+                              fontSize: 14, color: AppTheme.danger),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF5350),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            child: Text(
+            icon: const Icon(Icons.delete_rounded, size: 16),
+            label: Text(
               'Eliminar',
-              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+              style: GoogleFonts.inter(
+                  fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.danger.withAlpha(38),
+              foregroundColor: AppTheme.danger,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+              elevation: 0,
             ),
           ),
         ],
@@ -452,7 +587,7 @@ class _ProductosPageState extends State<ProductosPage> {
   }
 }
 
-// ─── Small action icon button ──────────────────────────────
+// ── Small action icon button ────────────────────────────────
 class _ActionIcon extends StatefulWidget {
   final IconData icon;
   final Color color;
@@ -484,17 +619,19 @@ class _ActionIconState extends State<_ActionIcon> {
           borderRadius: BorderRadius.circular(8),
           onTap: widget.onTap,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            width: 34,
-            height: 34,
+            duration: const Duration(milliseconds: 160),
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              color: _hovered ? widget.color.withAlpha(30) : Colors.transparent,
+              color: _hovered
+                  ? widget.color.withAlpha(38)
+                  : Colors.transparent,
             ),
             child: Icon(
               widget.icon,
-              size: 18,
-              color: _hovered ? widget.color : Colors.white54,
+              size: 17,
+              color: _hovered ? widget.color : AppTheme.textSecondary,
             ),
           ),
         ),

@@ -51,7 +51,9 @@ class ProductoProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadProductos() async {
+  Future<void> loadProductos() => fetchProductos();
+
+  Future<void> fetchProductos() async {
     _status = ProductoStatus.loading;
     notifyListeners();
     try {
@@ -69,27 +71,24 @@ class ProductoProvider extends ChangeNotifier {
 
   Future<bool> createProducto(Producto p) async {
     try {
-      final created = await _service.createProducto(p);
-      _productos.add(created);
-      notifyListeners();
+      await _service.createProducto(p);
+      await fetchProductos();
       return true;
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
       return false;
     }
   }
 
   Future<bool> updateProducto(int id, Producto p) async {
     try {
-      final updated = await _service.updateProducto(id, p);
-      final idx = _productos.indexWhere((x) => x.id == id);
-      if (idx != -1) {
-        _productos[idx] = updated;
-      }
-      notifyListeners();
+      await _service.updateProducto(id, p);
+      await fetchProductos();
       return true;
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
       return false;
     }
   }
@@ -97,11 +96,11 @@ class ProductoProvider extends ChangeNotifier {
   Future<bool> deleteProducto(int id) async {
     try {
       await _service.deleteProducto(id);
-      _productos.removeWhere((x) => x.id == id);
-      notifyListeners();
+      await fetchProductos();
       return true;
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
       return false;
     }
   }

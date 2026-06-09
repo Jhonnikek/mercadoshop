@@ -9,107 +9,197 @@ class ProductoService {
 
   ProductoService(this._authService);
 
-  /// Builds auth headers using the stored JWT.
-  Future<Map<String, String>> _authHeaders() async {
-    final token = await _authService.getAccessToken();
-    return {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    };
-  }
-
-  /// GET all products.
   Future<List<Producto>> getProductos() async {
-    final headers = await _authHeaders();
-    // Ensuring the trailing slash is present
-    final url = PRODUCTOS_URL.endsWith('/') ? PRODUCTOS_URL : '$PRODUCTOS_URL/';
-    final response = await http
-        .get(Uri.parse(url), headers: headers)
-        .timeout(const Duration(seconds: 15));
+    final token = await _authService.getAccessToken();
 
-    print('STATUS: ${response.statusCode}');
-    print('BODY: ${response.body}');
+    if (token == null || token.isEmpty) {
+      throw HttpException('401: Token no encontrado');
+    }
+
+    var response = await http.get(
+      Uri.parse(PRODUCTOS_URL),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 401) {
+      final refreshed = await _authService.refreshAccessToken();
+      if (refreshed) {
+        final newToken = await _authService.getAccessToken();
+        response = await http.get(
+          Uri.parse(PRODUCTOS_URL),
+          headers: {
+            'Authorization': 'Bearer $newToken',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        ).timeout(const Duration(seconds: 15));
+      } else {
+        await _authService.logoutAndRedirect();
+      }
+    }
 
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
-      // Handle both paginated ({ results: [...] }) and plain list responses
-      final List<dynamic> list =
-          (body is List) ? body : (body['results'] as List<dynamic>? ?? []);
-      return list
-          .map((e) => Producto.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final List<dynamic> data = body is List
+          ? body
+          : (body['productos'] as List<dynamic>? ?? []);
+      return data.map((json) => Producto.fromJson(json as Map<String, dynamic>)).toList();
+    } else if (response.statusCode == 401) {
+      throw HttpException('401: Error al obtener productos');
+    } else {
+      throw HttpException('${response.statusCode}: Error al obtener productos');
     }
-
-    throw HttpException(
-      'Error al obtener productos',
-      response.statusCode,
-    );
   }
 
-  /// POST – create a new product.
   Future<Producto> createProducto(Producto p) async {
-    final headers = await _authHeaders();
+    final token = await _authService.getAccessToken();
+
+    if (token == null || token.isEmpty) {
+      throw HttpException('401: Token no encontrado');
+    }
+
     final url = PRODUCTOS_URL.endsWith('/') ? PRODUCTOS_URL : '$PRODUCTOS_URL/';
-    final response = await http
-        .post(
+    var response = await http.post(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode(p.toJson()),
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 401) {
+      final refreshed = await _authService.refreshAccessToken();
+      if (refreshed) {
+        final newToken = await _authService.getAccessToken();
+        response = await http.post(
           Uri.parse(url),
-          headers: headers,
+          headers: {
+            'Authorization': 'Bearer $newToken',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
           body: jsonEncode(p.toJson()),
-        )
-        .timeout(const Duration(seconds: 15));
+        ).timeout(const Duration(seconds: 15));
+      } else {
+        await _authService.logoutAndRedirect();
+      }
+    }
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       return Producto.fromJson(
         jsonDecode(response.body) as Map<String, dynamic>,
       );
+    } else if (response.statusCode == 401) {
+      throw HttpException('401: Error al crear producto');
+    } else {
+      throw HttpException('${response.statusCode}: Error al crear producto');
     }
-
-    throw HttpException('Error al crear producto', response.statusCode);
   }
 
-  /// PUT – update an existing product.
   Future<Producto> updateProducto(int id, Producto p) async {
-    final headers = await _authHeaders();
+    final token = await _authService.getAccessToken();
+
+    if (token == null || token.isEmpty) {
+      throw HttpException('401: Token no encontrado');
+    }
+
     final detailUrl = productoDetailUrl(id);
     final url = detailUrl.endsWith('/') ? detailUrl : '$detailUrl/';
-    final response = await http
-        .put(
+    var response = await http.put(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode(p.toJson()),
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 401) {
+      final refreshed = await _authService.refreshAccessToken();
+      if (refreshed) {
+        final newToken = await _authService.getAccessToken();
+        response = await http.put(
           Uri.parse(url),
-          headers: headers,
+          headers: {
+            'Authorization': 'Bearer $newToken',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
           body: jsonEncode(p.toJson()),
-        )
-        .timeout(const Duration(seconds: 15));
+        ).timeout(const Duration(seconds: 15));
+      } else {
+        await _authService.logoutAndRedirect();
+      }
+    }
 
     if (response.statusCode == 200) {
       return Producto.fromJson(
         jsonDecode(response.body) as Map<String, dynamic>,
       );
+    } else if (response.statusCode == 401) {
+      throw HttpException('401: Error al actualizar producto');
+    } else {
+      throw HttpException('${response.statusCode}: Error al actualizar producto');
     }
-
-    throw HttpException('Error al actualizar producto', response.statusCode);
   }
 
-  /// DELETE – remove a product.
   Future<void> deleteProducto(int id) async {
-    final headers = await _authHeaders();
+    final token = await _authService.getAccessToken();
+
+    if (token == null || token.isEmpty) {
+      throw HttpException('401: Token no encontrado');
+    }
+
     final detailUrl = productoDetailUrl(id);
     final url = detailUrl.endsWith('/') ? detailUrl : '$detailUrl/';
-    final response = await http
-        .delete(Uri.parse(url), headers: headers)
-        .timeout(const Duration(seconds: 15));
+    var response = await http.delete(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ).timeout(const Duration(seconds: 15));
 
-    if (response.statusCode != 200 && response.statusCode != 204) {
-      throw HttpException('Error al eliminar producto', response.statusCode);
+    if (response.statusCode == 401) {
+      final refreshed = await _authService.refreshAccessToken();
+      if (refreshed) {
+        final newToken = await _authService.getAccessToken();
+        response = await http.delete(
+          Uri.parse(url),
+          headers: {
+            'Authorization': 'Bearer $newToken',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        ).timeout(const Duration(seconds: 15));
+      } else {
+        await _authService.logoutAndRedirect();
+      }
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return;
+    } else if (response.statusCode == 401) {
+      throw HttpException('401: Error al eliminar producto');
+    } else {
+      throw HttpException('${response.statusCode}: Error al eliminar producto');
     }
   }
 }
 
-/// Simple typed HTTP exception.
 class HttpException implements Exception {
   final String message;
-  final int statusCode;
-  HttpException(this.message, this.statusCode);
+  final int? statusCode;
+  HttpException(this.message, [this.statusCode]);
 
   @override
-  String toString() => 'HttpException($statusCode): $message';
+  String toString() => statusCode != null ? 'HttpException($statusCode): $message' : 'HttpException: $message';
 }
