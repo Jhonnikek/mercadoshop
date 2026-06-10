@@ -26,7 +26,7 @@ async def dashboard(request): # ASYNC: async def
 @staff_member_required(login_url='login')
 async def gestionarTiendas(request): # ASYNC: async def
     tiendas_qs = (
-        Tienda.objects.all()
+        Tienda.objects.select_related('usuario')
         .annotate(num_productos=Count('productos'))
         .order_by('-id')
     )
