@@ -7,6 +7,9 @@ from panel_admin.models import Tienda
 
 from .serializers import ProductoListSerializer, TiendaPublicSerializer
 
+# ASYNC: DRF @api_view no soporta nativamente async def.
+# Las vistas se mantienen síncronas y se envuelven con sync_to_async en urls.py 
+# como puente seguro para la compatibilidad con ASGI.
 
 @api_view(["GET"])
 @permission_classes([AllowAny])

@@ -7,6 +7,9 @@ from rest_framework.response import Response
 from .models import Producto
 from .serializers import ProductoSerializer, TiendaResumenSerializer
 
+# ASYNC: Las CBVs de DRF no son nativamente compatibles con async def en su ciclo de vida.
+# Por lo tanto, se ha optado por mantenerlas síncronas y envolver la ruta as_view() 
+# con sync_to_async en urls.py como puente, asegurando que no bloqueen el event loop.
 
 class TiendaMixin:
     """Ensure the authenticated user has a tienda and scope querysets to it."""
